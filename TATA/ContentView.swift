@@ -49,7 +49,10 @@ struct ContentView: View {
                 }
 
                 Tab("Albums", systemImage: "photo.stack", value: .albums) {
-                    EmptyView()
+                    AlbumsView(
+                        deletionManager: deletionManager,
+                        isShowingPendingDeletions: $isShowingPendingDeletions
+                    )
                 }
 
                 Tab("Settings", systemImage: "gearshape", value: .settings) {

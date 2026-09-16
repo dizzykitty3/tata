@@ -31,10 +31,11 @@ struct DateView: View {
                                 Section(sectionTitle(for: section)) {
                                     ForEach(section.periods) { period in
                                         NavigationLink {
-                                            DateDayGridView(
-                                                period: period,
+                                            MediaGridView(
+                                                assets: period.assets,
+                                                title: periodTitle(for: period),
                                                 deletionManager: deletionManager,
-                                                refreshTimeline: {
+                                                refreshMedia: {
                                                     model.reload(grouping: grouping)
                                                 }
                                             )
@@ -84,6 +85,17 @@ struct DateView: View {
             section.date.formatted(.dateTime.year().month(.wide))
         case .month:
             section.date.formatted(.dateTime.year())
+        }
+    }
+
+    private func periodTitle(for period: TimelineMediaPeriod) -> String {
+        switch grouping {
+        case .date:
+            period.date.formatted(.dateTime.year().month(.wide).day())
+        case .week:
+            "Week of \(period.date.formatted(.dateTime.month(.wide).day()))"
+        case .month:
+            period.date.formatted(.dateTime.year().month(.wide))
         }
     }
 }
@@ -205,10 +217,11 @@ private struct DateMediaCollage: View {
     }
 }
 
-private struct DateDayGridView: View {
-    let period: TimelineMediaPeriod
+struct MediaGridView: View {
+    let assets: [PHAsset]
+    let title: String
     @ObservedObject var deletionManager: DeletionManager
-    let refreshTimeline: () -> Void
+    let refreshMedia: () -> Void
 
     @State private var isSelecting = false
     @State private var selectedAssetIdentifiers = Set<String>()
@@ -259,7 +272,7 @@ private struct DateDayGridView: View {
                 .padding(.bottom, 16)
             }
         }
-        .navigationTitle(periodTitle)
+        .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -281,7 +294,7 @@ private struct DateDayGridView: View {
                 return
             }
             Task { @MainActor in
-                refreshTimeline()
+                refreshMedia()
             }
         }
     }
@@ -290,7 +303,7 @@ private struct DateDayGridView: View {
         let pendingIdentifiers = Set(
             deletionManager.pendingAssets.map(\.localIdentifier)
         )
-        return period.assets.filter {
+        return assets.filter {
             !pendingIdentifiers.contains($0.localIdentifier)
         }
     }
@@ -316,9 +329,6 @@ private struct DateDayGridView: View {
         didChangePendingDeletions = true
     }
 
-    private var periodTitle: String {
-        period.date.formatted(.dateTime.year().month(.wide).day())
-    }
 }
 
 private struct DateDayGridCell: View {
