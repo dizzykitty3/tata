@@ -15,6 +15,8 @@ struct SwipeView: View {
 
     @State private var offset: CGSize = .zero
     @State private var dragAxis: DragAxis?
+    @State private var includedAlbumTitles: [String] = []
+    @State private var showsAllIncludedAlbums = false
 
     private var transitionProgress: Double {
         guard let dragAxis else {
@@ -37,81 +39,151 @@ struct SwipeView: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                Color(uiColor: .systemBackground)
+        GeometryReader { safeAreaProxy in
+            GeometryReader { proxy in
+                ZStack {
+                    Color(uiColor: .systemBackground)
 
-                if let previous = model.previous {
-                    MediaView(
-                        asset: previous,
-                        showsPlaybackButton: false
-                    )
-                    .id(previous.localIdentifier)
-                    .opacity(
-                        dragAxis == .horizontal && offset.width > 0
-                            ? transitionProgress
-                            : 0
-                    )
-                }
-
-                if let next = model.next {
-                    MediaView(
-                        asset: next,
-                        showsPlaybackButton: false
-                    )
-                    .id(next.localIdentifier)
-                    .opacity(
-                        dragAxis == .vertical
-                            || (dragAxis == .horizontal && offset.width < 0)
-                            ? transitionProgress
-                            : 0
-                    )
-                }
-
-                if let current = model.current {
-                    MediaView(
-                        asset: current,
-                        showsPlaybackButton: true
-                    )
-                    .id(current.localIdentifier)
-                    .background {
-                        Color(uiColor: .systemBackground)
-                            .opacity(offset == .zero ? 1 : 0)
-                    }
-                    .offset(offset)
-                    .opacity(1 - transitionProgress)
-                } else {
-                    ContentUnavailableView(
-                        "No Media",
-                        systemImage: "photo.on.rectangle.angled",
-                        description: Text(
-                            model.previous == nil
-                                ? "Your photo library doesn't contain any media."
-                                : "You've reached the end of your media."
+                    if let previous = model.previous {
+                        MediaView(
+                            asset: previous,
+                            showsPlaybackButton: false
                         )
-                    )
-                    .offset(
-                        model.previous == nil ? .zero : offset
-                    )
-                    .opacity(
-                        model.previous == nil
-                            ? 1
-                            : 1 - transitionProgress
-                    )
+                        .id(previous.localIdentifier)
+                        .opacity(
+                            dragAxis == .horizontal && offset.width > 0
+                                ? transitionProgress
+                                : 0
+                        )
+                    }
+
+                    if let next = model.next {
+                        MediaView(
+                            asset: next,
+                            showsPlaybackButton: false
+                        )
+                        .id(next.localIdentifier)
+                        .opacity(
+                            dragAxis == .vertical
+                                || (dragAxis == .horizontal && offset.width < 0)
+                                ? transitionProgress
+                                : 0
+                        )
+                    }
+
+                    if let current = model.current {
+                        MediaView(
+                            asset: current,
+                            showsPlaybackButton: true
+                        )
+                        .id(current.localIdentifier)
+                        .background {
+                            Color(uiColor: .systemBackground)
+                                .opacity(offset == .zero ? 1 : 0)
+                        }
+                        .offset(offset)
+                        .opacity(1 - transitionProgress)
+                    } else {
+                        ContentUnavailableView(
+                            "No Media",
+                            systemImage: "photo.on.rectangle.angled",
+                            description: Text(
+                                model.previous == nil
+                                    ? "Your photo library doesn't contain any media."
+                                    : "You've reached the end of your media."
+                            )
+                        )
+                        .offset(
+                            model.previous == nil ? .zero : offset
+                        )
+                        .opacity(
+                            model.previous == nil
+                                ? 1
+                                : 1 - transitionProgress
+                        )
+                    }
+                }
+                .frame(
+                    width: proxy.size.width,
+                    height: proxy.size.height
+                )
+                .position(
+                    x: proxy.size.width / 2,
+                    y: proxy.size.height / 2
+                )
+                .contentShape(Rectangle())
+                .gesture(dragGesture)
+            }
+            .ignoresSafeArea()
+            .overlay(alignment: .topLeading) {
+                if !includedAlbumTitles.isEmpty {
+                    includedAlbumsPills()
+                        .padding(.top, safeAreaProxy.safeAreaInsets.top + 12)
+                        .padding(.leading, 16)
                 }
             }
-            .frame(
-                width: proxy.size.width,
-                height: proxy.size.height
-            )
-            .position(
-                x: proxy.size.width / 2,
-                y: proxy.size.height / 2
-            )
-            .contentShape(Rectangle())
-            .gesture(dragGesture)
         }
-        .ignoresSafeArea()
+        .task(id: model.current?.localIdentifier) {
+            loadIncludedAlbums()
+        }
+    }
+
+    @ViewBuilder
+    private func includedAlbumsPills() -> some View {
+        let displayedTitles = showsAllIncludedAlbums
+            ? includedAlbumTitles
+            : Array(includedAlbumTitles.prefix(2))
+
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(displayedTitles, id: \.self) { title in
+                Text("Included in \(title)")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Color(uiColor: .systemGray).opacity(0.55),
+                        in: Capsule()
+                    )
+            }
+
+            if includedAlbumTitles.count > 2, !showsAllIncludedAlbums {
+                Button {
+                    showsAllIncludedAlbums = true
+                } label: {
+                    Text("…")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Color(uiColor: .systemGray).opacity(0.55),
+                            in: Capsule()
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Show all included albums")
+            }
+        }
+    }
+
+    private func loadIncludedAlbums() {
+        guard let asset = model.current else {
+            includedAlbumTitles = []
+            showsAllIncludedAlbums = false
+            return
+        }
+
+        let albums = PHAssetCollection.fetchAssetCollectionsContaining(
+            asset,
+            with: .album,
+            options: nil
+        )
+
+        includedAlbumTitles = (0..<albums.count).compactMap { index in
+            albums.object(at: index).localizedTitle
+        }
+        showsAllIncludedAlbums = false
     }
 
     private var dragGesture: some Gesture {
