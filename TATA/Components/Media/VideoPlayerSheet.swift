@@ -6,7 +6,13 @@ import UIKit
 struct VideoPlayerSheet: View {
     let asset: PHAsset
 
+    @ObservedObject
+    private var muteController = MediaPlaybackMuteController.shared
+
     @State private var player: AVPlayer?
+    @State private var isMutedByDefault = false
+    @State private var startedMutedPlayback = false
+    @State private var isPlaybackViewVisible = false
 
     var body: some View {
         Group {
@@ -20,14 +26,36 @@ struct VideoPlayerSheet: View {
                 ProgressView()
             }
         }
+        .onAppear {
+            isPlaybackViewVisible = true
+        }
         .task {
             PhotoService.shared.requestVideo(asset: asset) { avAsset in
-                if let avAsset {
-                    player = AVPlayer(
+                if let avAsset, isPlaybackViewVisible {
+                    let player = AVPlayer(
                         playerItem: AVPlayerItem(asset: avAsset)
                     )
+                    let shouldMute = muteController.beginMutedPlaybackIfNeeded()
+                    player.isMuted = shouldMute
+                    isMutedByDefault = shouldMute
+                    startedMutedPlayback = shouldMute
+                    self.player = player
                 }
             }
+        }
+        .onChange(of: muteController.hasManualVolumeOverride) { _, hasOverride in
+            guard hasOverride, isMutedByDefault else {
+                return
+            }
+
+            player?.isMuted = false
+            isMutedByDefault = false
+        }
+        .onDisappear {
+            isPlaybackViewVisible = false
+            muteController.endMutedPlaybackIfNeeded(startedMutedPlayback)
+            startedMutedPlayback = false
+            player?.pause()
         }
     }
 }
