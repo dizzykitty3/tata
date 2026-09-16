@@ -15,6 +15,9 @@ struct ContentView: View {
     @StateObject
     private var swipeModel: SwipeViewModel
 
+    @StateObject
+    private var dateModel: DateViewModel
+
     @State private var isShowingPendingDeletions = false
     @State private var selectedTab: AppTab = .swipe
     @State private var sharedMedia: SharedMedia?
@@ -28,6 +31,7 @@ struct ContentView: View {
                 deletionManager: deletionManager
             )
         )
+        _dateModel = StateObject(wrappedValue: DateViewModel())
     }
 
     var body: some View {
@@ -40,7 +44,11 @@ struct ContentView: View {
                 }
 
                 Tab("Date", systemImage: "calendar", value: .date) {
-                    EmptyView()
+                    DateView(
+                        model: dateModel,
+                        deletionManager: deletionManager,
+                        isShowingPendingDeletions: $isShowingPendingDeletions
+                    )
                 }
 
                 Tab("Albums", systemImage: "photo.stack", value: .albums) {
@@ -53,8 +61,8 @@ struct ContentView: View {
             }
 
             if selectedTab == .swipe,
-               swipeModel.current != nil
-                || !deletionManager.pendingAssets.isEmpty {
+               (swipeModel.current != nil
+                || !deletionManager.pendingAssets.isEmpty) {
                 HStack(spacing: 12) {
                     if swipeModel.current != nil {
                         Button {
@@ -75,7 +83,7 @@ struct ContentView: View {
                         .accessibilityLabel("Share Current Media")
                     }
 
-                    if !deletionManager.pendingAssets.isEmpty {
+                    if deletionManager.hasPendingAssets(from: .swipe) {
                         Button {
                             swipeModel.undoLastDeletion()
                         } label: {

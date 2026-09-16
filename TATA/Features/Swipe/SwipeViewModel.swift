@@ -95,7 +95,7 @@ final class SwipeViewModel: ObservableObject {
     }
 
     func undoLastDeletion() {
-        guard deletionManager.undoLast() != nil else {
+        guard deletionManager.undoLast(from: .swipe) != nil else {
             return
         }
 
@@ -126,7 +126,7 @@ final class SwipeViewModel: ObservableObject {
             return
         }
 
-        deletionManager.add(current)
+        deletionManager.add(current, source: .swipe)
 
         if let deletedIndex = assets.firstIndex(
             where: { $0.localIdentifier == current.localIdentifier }

@@ -4,10 +4,17 @@ import Combine
 
 @MainActor
 final class DeletionManager: ObservableObject {
+    enum Source {
+        case swipe
+        case date
+    }
+
     @Published
     private(set) var pendingAssets: [PHAsset] = []
 
-    func add(_ asset: PHAsset) {
+    private var sourceByAssetIdentifier: [String: Source] = [:]
+
+    func add(_ asset: PHAsset, source: Source) {
         guard !pendingAssets.contains(where: {
             $0.localIdentifier == asset.localIdentifier
         }) else {
@@ -15,15 +22,26 @@ final class DeletionManager: ObservableObject {
         }
 
         pendingAssets.append(asset)
+        sourceByAssetIdentifier[asset.localIdentifier] = source
     }
 
     @discardableResult
-    func undoLast() -> PHAsset? {
-        guard !pendingAssets.isEmpty else {
+    func undoLast(from source: Source) -> PHAsset? {
+        guard let index = pendingAssets.lastIndex(where: {
+            sourceByAssetIdentifier[$0.localIdentifier] == source
+        }) else {
             return nil
         }
 
-        return pendingAssets.removeLast()
+        let asset = pendingAssets.remove(at: index)
+        sourceByAssetIdentifier[asset.localIdentifier] = nil
+        return asset
+    }
+
+    func hasPendingAssets(from source: Source) -> Bool {
+        pendingAssets.contains {
+            sourceByAssetIdentifier[$0.localIdentifier] == source
+        }
     }
 
     func deleteAll(
@@ -38,6 +56,7 @@ final class DeletionManager: ObservableObject {
             Task { @MainActor in
                 if case .success = result {
                     self.pendingAssets.removeAll()
+                    self.sourceByAssetIdentifier.removeAll()
                 }
                 completion(result)
             }
