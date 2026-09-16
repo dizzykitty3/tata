@@ -4,6 +4,8 @@ import Combine
 
 @MainActor
 final class DeletionManager: ObservableObject {
+    static let deletedMediaCountKey = "deletedMediaCount"
+
     enum Source {
         case swipe
         case date
@@ -13,7 +15,16 @@ final class DeletionManager: ObservableObject {
     @Published
     private(set) var pendingAssets: [PHAsset] = []
 
+    @Published
+    private(set) var deletedMediaCount: Int
+
     private var sourceByAssetIdentifier: [String: Source] = [:]
+
+    init() {
+        deletedMediaCount = UserDefaults.standard.integer(
+            forKey: Self.deletedMediaCountKey
+        )
+    }
 
     func add(_ asset: PHAsset, source: Source) {
         guard !pendingAssets.contains(where: {
@@ -53,9 +64,15 @@ final class DeletionManager: ObservableObject {
             return
         }
 
+        let deletedCount = pendingAssets.count
         PhotoService.shared.delete(assets: pendingAssets) { result in
             Task { @MainActor in
                 if case .success = result {
+                    self.deletedMediaCount += deletedCount
+                    UserDefaults.standard.set(
+                        self.deletedMediaCount,
+                        forKey: Self.deletedMediaCountKey
+                    )
                     self.pendingAssets.removeAll()
                     self.sourceByAssetIdentifier.removeAll()
                 }

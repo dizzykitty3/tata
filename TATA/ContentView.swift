@@ -56,7 +56,7 @@ struct ContentView: View {
                 }
 
                 Tab("Settings", systemImage: "gearshape", value: .settings) {
-                    SettingsView()
+                    SettingsView(deletionManager: deletionManager)
                 }
             }
 

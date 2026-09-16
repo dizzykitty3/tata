@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @ObservedObject var deletionManager: DeletionManager
+
     @AppStorage(TimelineGrouping.storageKey)
     private var timelineGrouping = TimelineGrouping.date.rawValue
 
@@ -34,6 +36,13 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    LabeledContent("Deleted Media") {
+                        Text(deletionManager.deletedMediaCount, format: .number)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    LabeledContent("Version", value: versionString)
+
                     Button("Open App Settings") {
                         openSettings()
                     }
@@ -50,8 +59,18 @@ struct SettingsView: View {
 
         UIApplication.shared.open(url)
     }
+
+    private var versionString: String {
+        let version = Bundle.main.object(
+            forInfoDictionaryKey: "CFBundleShortVersionString"
+        ) as? String ?? "1.0"
+        let build = Bundle.main.object(
+            forInfoDictionaryKey: "CFBundleVersion"
+        ) as? String ?? "1"
+        return "\(version) (\(build))"
+    }
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(deletionManager: DeletionManager())
 }
