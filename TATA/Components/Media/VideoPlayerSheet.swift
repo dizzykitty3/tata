@@ -15,15 +15,31 @@ struct VideoPlayerSheet: View {
     @State private var isPlaybackViewVisible = false
 
     var body: some View {
-        Group {
-            if let player {
-                PlayerLayerView(player: player)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .onAppear {
-                        player.play()
-                    }
-            } else {
-                ProgressView()
+        ZStack {
+            Group {
+                if let player {
+                    PlayerLayerView(player: player)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .onAppear {
+                            player.play()
+                        }
+                } else {
+                    ProgressView()
+                }
+            }
+
+            VStack {
+                HStack {
+                    IncludedAlbumsPills(asset: asset)
+                    Spacer()
+                }
+                .padding(.top, 12)
+                .padding(.leading, 16)
+
+                Spacer()
+
+                MediaShareButton(asset: asset)
+                    .padding(.bottom, 16)
             }
         }
         .onAppear {

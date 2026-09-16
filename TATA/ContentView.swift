@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 struct ContentView: View {
     private enum AppTab: Hashable {
@@ -20,8 +19,6 @@ struct ContentView: View {
 
     @State private var isShowingPendingDeletions = false
     @State private var selectedTab: AppTab = .swipe
-    @State private var sharedMedia: SharedMedia?
-    @State private var isPreparingShare = false
 
     init() {
         let deletionManager = DeletionManager()
@@ -65,25 +62,14 @@ struct ContentView: View {
                 || !deletionManager.pendingAssets.isEmpty) {
                 HStack(spacing: 12) {
                     if swipeModel.current != nil {
-                        Button {
-                            prepareShare()
-                        } label: {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.title3)
-                                .frame(
-                                    width: PendingDeletionLayout.buttonHeight,
-                                    height: PendingDeletionLayout.buttonHeight,
-                                    alignment: .center
-                                )
+                        if let asset = swipeModel.current {
+                            MediaShareButton(asset: asset)
+                                .accessibilityLabel("Share Current Media")
                         }
-                        .buttonStyle(.glassProminent)
-                        .buttonBorderShape(.circle)
-                        .tint(.blue)
-                        .disabled(isPreparingShare)
-                        .accessibilityLabel("Share Current Media")
                     }
 
-                    if deletionManager.hasPendingAssets(from: .swipe) {
+                    if !deletionManager.pendingAssets.isEmpty {
+                        if deletionManager.hasPendingAssets(from: .swipe) {
                         Button {
                             swipeModel.undoLastDeletion()
                         } label: {
@@ -98,6 +84,7 @@ struct ContentView: View {
                         .buttonStyle(.glass)
                         .buttonBorderShape(.circle)
                         .accessibilityLabel("Undo Last Deletion")
+                        }
 
                         Button {
                             isShowingPendingDeletions = true
@@ -123,54 +110,7 @@ struct ContentView: View {
         .sheet(isPresented: $isShowingPendingDeletions) {
             PendingDeletionSheet(deletionManager: deletionManager)
         }
-        .sheet(item: $sharedMedia) { media in
-            ActivityShareSheet(fileURL: media.fileURL) {
-                try? FileManager.default.removeItem(at: media.fileURL)
-                sharedMedia = nil
-            }
-        }
     }
-
-    private func prepareShare() {
-        guard let asset = swipeModel.current else {
-            return
-        }
-
-        isPreparingShare = true
-        PhotoService.shared.requestShareFile(asset: asset) { fileURL in
-            isPreparingShare = false
-
-            if let fileURL {
-                sharedMedia = SharedMedia(fileURL: fileURL)
-            }
-        }
-    }
-}
-
-private struct SharedMedia: Identifiable {
-    let id = UUID()
-    let fileURL: URL
-}
-
-private struct ActivityShareSheet: UIViewControllerRepresentable {
-    let fileURL: URL
-    let completion: () -> Void
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let controller = UIActivityViewController(
-            activityItems: [fileURL],
-            applicationActivities: nil
-        )
-        controller.completionWithItemsHandler = { _, _, _, _ in
-            completion()
-        }
-        return controller
-    }
-
-    func updateUIViewController(
-        _ uiViewController: UIActivityViewController,
-        context: Context
-    ) {}
 }
 
 #Preview {

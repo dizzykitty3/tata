@@ -84,14 +84,7 @@ struct PendingDeletionSheet: View {
         }
         .sheet(item: $selectedPhoto) { photo in
             NavigationStack {
-                ImageView(
-                    asset: photo.asset,
-                    targetSize: PHImageManagerMaximumSize,
-                    contentMode: .fit
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .navigationTitle("Photo")
-                .navigationBarTitleDisplayMode(.inline)
+                MediaPhotoPreviewSheet(asset: photo.asset)
             }
         }
     }

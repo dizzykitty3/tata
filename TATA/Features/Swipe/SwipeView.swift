@@ -15,8 +15,6 @@ struct SwipeView: View {
 
     @State private var offset: CGSize = .zero
     @State private var dragAxis: DragAxis?
-    @State private var includedAlbumTitles: [String] = []
-    @State private var showsAllIncludedAlbums = false
 
     private var transitionProgress: Double {
         guard let dragAxis else {
@@ -116,74 +114,13 @@ struct SwipeView: View {
             }
             .ignoresSafeArea()
             .overlay(alignment: .topLeading) {
-                if !includedAlbumTitles.isEmpty {
-                    includedAlbumsPills()
-                        .padding(.top, safeAreaProxy.safeAreaInsets.top + 12)
+                if let asset = model.current {
+                    IncludedAlbumsPills(asset: asset)
+                        .padding(.top, safeAreaProxy.safeAreaInsets.top + 6)
                         .padding(.leading, 16)
                 }
             }
         }
-        .task(id: model.current?.localIdentifier) {
-            loadIncludedAlbums()
-        }
-    }
-
-    @ViewBuilder
-    private func includedAlbumsPills() -> some View {
-        let displayedTitles = showsAllIncludedAlbums
-            ? includedAlbumTitles
-            : Array(includedAlbumTitles.prefix(2))
-
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(displayedTitles, id: \.self) { title in
-                Text("Included in \(title)")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        Color(uiColor: .systemGray).opacity(0.55),
-                        in: Capsule()
-                    )
-            }
-
-            if includedAlbumTitles.count > 2, !showsAllIncludedAlbums {
-                Button {
-                    showsAllIncludedAlbums = true
-                } label: {
-                    Text("…")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Color(uiColor: .systemGray).opacity(0.55),
-                            in: Capsule()
-                        )
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Show all included albums")
-            }
-        }
-    }
-
-    private func loadIncludedAlbums() {
-        guard let asset = model.current else {
-            includedAlbumTitles = []
-            showsAllIncludedAlbums = false
-            return
-        }
-
-        let albums = PHAssetCollection.fetchAssetCollectionsContaining(
-            asset,
-            with: .album,
-            options: nil
-        )
-
-        includedAlbumTitles = (0..<albums.count).compactMap { index in
-            albums.object(at: index).localizedTitle
-        }
-        showsAllIncludedAlbums = false
     }
 
     private var dragGesture: some Gesture {

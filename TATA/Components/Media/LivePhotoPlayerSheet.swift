@@ -22,41 +22,57 @@ struct LivePhotoPlayerSheet: View {
     }
 
     var body: some View {
-        Group {
-            if let livePhoto {
-                GeometryReader { proxy in
-                    let containerRatio = proxy.size.width / proxy.size.height
-                    let fittedSize: CGSize = {
-                        if aspectRatio > containerRatio {
-                            let width = proxy.size.width
-                            return CGSize(
-                                width: width,
-                                height: width / aspectRatio
-                            )
-                        } else {
-                            let height = proxy.size.height
-                            return CGSize(
-                                width: height * aspectRatio,
-                                height: height
-                            )
-                        }
-                    }()
+        ZStack {
+            Group {
+                if let livePhoto {
+                    GeometryReader { proxy in
+                        let containerRatio = proxy.size.width / proxy.size.height
+                        let fittedSize: CGSize = {
+                            if aspectRatio > containerRatio {
+                                let width = proxy.size.width
+                                return CGSize(
+                                    width: width,
+                                    height: width / aspectRatio
+                                )
+                            } else {
+                                let height = proxy.size.height
+                                return CGSize(
+                                    width: height * aspectRatio,
+                                    height: height
+                                )
+                            }
+                        }()
 
-                    LivePhotoPlayerView(
-                        livePhoto: livePhoto,
-                        isMuted: isMutedByDefault
-                    )
-                        .frame(
-                            width: fittedSize.width,
-                            height: fittedSize.height
+                        LivePhotoPlayerView(
+                            livePhoto: livePhoto,
+                            isMuted: isMutedByDefault
                         )
-                        .position(
-                            x: proxy.size.width / 2,
-                            y: proxy.size.height / 2
-                        )
+                            .frame(
+                                width: fittedSize.width,
+                                height: fittedSize.height
+                            )
+                            .position(
+                                x: proxy.size.width / 2,
+                                y: proxy.size.height / 2
+                            )
+                    }
+                } else {
+                    ProgressView()
                 }
-            } else {
-                ProgressView()
+            }
+
+            VStack {
+                HStack {
+                    IncludedAlbumsPills(asset: asset)
+                    Spacer()
+                }
+                .padding(.top, 12)
+                .padding(.leading, 16)
+
+                Spacer()
+
+                MediaShareButton(asset: asset)
+                    .padding(.bottom, 16)
             }
         }
         .onAppear {
