@@ -6,32 +6,42 @@ struct DateView: View {
     @ObservedObject var deletionManager: DeletionManager
     @Binding var isShowingPendingDeletions: Bool
 
+    @AppStorage(TimelineGrouping.storageKey)
+    private var timelineGrouping = TimelineGrouping.date.rawValue
+
+    private var grouping: TimelineGrouping {
+        TimelineGrouping(rawValue: timelineGrouping) ?? .date
+    }
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 Group {
-                    if model.months.isEmpty {
+                    if model.sections.isEmpty {
                         ContentUnavailableView(
                             "No Media",
                             systemImage: "calendar.badge.exclamationmark",
                             description: Text(
-                                "Your photo library doesn't contain dated media."
+                                "Your photo library doesn't contain media with a date."
                             )
                         )
                     } else {
                         List {
-                            ForEach(model.months) { month in
-                                Section(month.date.formatted(.dateTime.year().month(.wide))) {
-                                    ForEach(month.days) { day in
+                            ForEach(model.sections) { section in
+                                Section(sectionTitle(for: section)) {
+                                    ForEach(section.periods) { period in
                                         NavigationLink {
                                             DateDayGridView(
-                                                day: day,
+                                                period: period,
                                                 deletionManager: deletionManager,
-                                                refreshDates: model.reload
+                                                refreshTimeline: {
+                                                    model.reload(grouping: grouping)
+                                                }
                                             )
                                         } label: {
                                             DateTimelineRow(
-                                                day: day,
+                                                period: period,
+                                                grouping: grouping,
                                                 deletionManager: deletionManager
                                             )
                                         }
@@ -58,31 +68,46 @@ struct DateView: View {
                     .padding(.bottom, 16)
                 }
             }
-            .navigationTitle("Date")
+            .navigationTitle("Timeline")
         }
         .onAppear {
-            model.reload()
+            model.reload(grouping: grouping)
+        }
+        .onChange(of: timelineGrouping) {
+            model.reload(grouping: grouping)
+        }
+    }
+
+    private func sectionTitle(for section: TimelineMediaSection) -> String {
+        switch grouping {
+        case .date, .week:
+            section.date.formatted(.dateTime.year().month(.wide))
+        case .month:
+            section.date.formatted(.dateTime.year())
         }
     }
 }
 
 private struct DateTimelineRow: View {
-    let day: DateMediaDay
+    let period: TimelineMediaPeriod
+    let grouping: TimelineGrouping
     @ObservedObject var deletionManager: DeletionManager
 
     private let calendar = Calendar.autoupdatingCurrent
 
     var body: some View {
         HStack(spacing: 12) {
-            DateMediaCollage(assets: Array(day.assets.prefix(3)))
+            DateMediaCollage(assets: Array(period.assets.prefix(3)))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(dayTitle)
                     .font(.body.weight(.semibold))
 
-                Text(day.date.formatted(.dateTime.weekday(.wide).day()))
+                if let subtitle {
+                    Text(subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                }
 
                 Text(mediaSummary)
                     .font(.caption)
@@ -100,22 +125,47 @@ private struct DateTimelineRow: View {
     }
 
     private var dayTitle: String {
-        if calendar.isDateInToday(day.date) {
-            return "Today"
-        }
+        switch grouping {
+        case .date:
+            if calendar.isDateInToday(period.date) {
+                return "Today"
+            }
 
-        if calendar.isDateInYesterday(day.date) {
-            return "Yesterday"
-        }
+            if calendar.isDateInYesterday(period.date) {
+                return "Yesterday"
+            }
 
-        return day.date.formatted(.dateTime.month(.abbreviated).day())
+            return period.date.formatted(.dateTime.month(.abbreviated).day())
+        case .week:
+            return "Week of \(period.date.formatted(.dateTime.month(.abbreviated).day()))"
+        case .month:
+            return period.date.formatted(.dateTime.month(.wide))
+        }
+    }
+
+    private var subtitle: String? {
+        switch grouping {
+        case .date:
+            return period.date.formatted(.dateTime.weekday(.wide).day())
+        case .week:
+            guard let endDate = calendar.date(
+                byAdding: .day,
+                value: 6,
+                to: period.date
+            ) else {
+                return nil
+            }
+            return "\(period.date.formatted(.dateTime.month(.abbreviated).day())) – \(endDate.formatted(.dateTime.month(.abbreviated).day()))"
+        case .month:
+            return period.date.formatted(.dateTime.year())
+        }
     }
 
     private var mediaSummary: String {
         let pendingIdentifiers = Set(
             deletionManager.pendingAssets.map(\.localIdentifier)
         )
-        let visibleAssets = day.assets.filter {
+        let visibleAssets = period.assets.filter {
             !pendingIdentifiers.contains($0.localIdentifier)
         }
         var components: [String] = []
@@ -156,9 +206,9 @@ private struct DateMediaCollage: View {
 }
 
 private struct DateDayGridView: View {
-    let day: DateMediaDay
+    let period: TimelineMediaPeriod
     @ObservedObject var deletionManager: DeletionManager
-    let refreshDates: () -> Void
+    let refreshTimeline: () -> Void
 
     @State private var isSelecting = false
     @State private var selectedAssetIdentifiers = Set<String>()
@@ -209,7 +259,7 @@ private struct DateDayGridView: View {
                 .padding(.bottom, 16)
             }
         }
-        .navigationTitle(day.date.formatted(.dateTime.month(.wide).day()))
+        .navigationTitle(periodTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -231,7 +281,7 @@ private struct DateDayGridView: View {
                 return
             }
             Task { @MainActor in
-                refreshDates()
+                refreshTimeline()
             }
         }
     }
@@ -240,7 +290,7 @@ private struct DateDayGridView: View {
         let pendingIdentifiers = Set(
             deletionManager.pendingAssets.map(\.localIdentifier)
         )
-        return day.assets.filter {
+        return period.assets.filter {
             !pendingIdentifiers.contains($0.localIdentifier)
         }
     }
@@ -264,6 +314,10 @@ private struct DateDayGridView: View {
         selectedAssetIdentifiers.removeAll()
         isSelecting = false
         didChangePendingDeletions = true
+    }
+
+    private var periodTitle: String {
+        period.date.formatted(.dateTime.year().month(.wide).day())
     }
 }
 

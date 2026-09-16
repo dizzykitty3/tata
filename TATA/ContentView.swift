@@ -40,7 +40,7 @@ struct ContentView: View {
                     )
                 }
 
-                Tab("Date", systemImage: "calendar", value: .date) {
+                Tab("Timeline", systemImage: "calendar", value: .date) {
                     DateView(
                         model: dateModel,
                         deletionManager: deletionManager,

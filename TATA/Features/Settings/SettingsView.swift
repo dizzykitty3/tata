@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @AppStorage(TimelineGrouping.storageKey)
+    private var timelineGrouping = TimelineGrouping.date.rawValue
+
     @AppStorage(MediaPlaybackMuteController.defaultMuteKey)
     private var muteMediaByDefault = false
 
@@ -8,6 +11,22 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Timeline span")
+
+                        Text("Choose how media is grouped in Timeline.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        Picker("Timeline span", selection: $timelineGrouping) {
+                            ForEach(TimelineGrouping.allCases) { grouping in
+                                Text(grouping.title).tag(grouping.rawValue)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                    }
+
                     Toggle(
                         "Mute videos and Live Photos by default",
                         isOn: $muteMediaByDefault
