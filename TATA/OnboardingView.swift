@@ -43,6 +43,8 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .frame(height: 52)
             .disabled(photoAuthorizationStatus == .restricted)
         }
         .padding(24)
