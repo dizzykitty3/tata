@@ -102,6 +102,36 @@ final class PhotoService {
         }
     }
 
+    func requestShareFile(
+        asset: PHAsset,
+        completion: @escaping (URL?) -> Void
+    ) {
+        guard let resource = shareResource(for: asset) else {
+            completion(nil)
+            return
+        }
+
+        let fileExtension = URL(
+            fileURLWithPath: resource.originalFilename
+        ).pathExtension
+        let fallbackExtension = asset.mediaType == .video ? "mov" : "jpg"
+        let destination = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension(
+                fileExtension.isEmpty ? fallbackExtension : fileExtension
+            )
+        let options = PHAssetResourceRequestOptions()
+        options.isNetworkAccessAllowed = true
+
+        PHAssetResourceManager.default().writeData(
+            for: resource,
+            toFile: destination,
+            options: options
+        ) { error in
+            completion(error == nil ? destination : nil)
+        }
+    }
+
     func delete(
         assets: [PHAsset],
         completion: @escaping (PhotoDeletionResult) -> Void
@@ -132,6 +162,17 @@ final class PhotoService {
         let nsError = error as NSError
         return nsError.domain == "PHPhotosErrorDomain"
             && nsError.code == PHPhotosError.userCancelled.rawValue
+    }
+
+    private func shareResource(for asset: PHAsset) -> PHAssetResource? {
+        let resources = PHAssetResource.assetResources(for: asset)
+
+        if asset.mediaType == .video {
+            return resources.first { $0.type == .video }
+        }
+
+        return resources.first { $0.type == .fullSizePhoto }
+            ?? resources.first { $0.type == .photo }
     }
 
     func preload(assets: [PHAsset]) {

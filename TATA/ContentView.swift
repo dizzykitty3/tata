@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
     private enum AppTab: Hashable {
@@ -16,6 +17,8 @@ struct ContentView: View {
 
     @State private var isShowingPendingDeletions = false
     @State private var selectedTab: AppTab = .swipe
+    @State private var sharedMedia: SharedMedia?
+    @State private var isPreparingShare = false
 
     init() {
         let deletionManager = DeletionManager()
@@ -50,37 +53,60 @@ struct ContentView: View {
             }
 
             if selectedTab == .swipe,
-               !deletionManager.pendingAssets.isEmpty {
-                HStack(spacing: 8) {
-                    Button {
-                        swipeModel.undoLastDeletion()
-                    } label: {
-                        Image(systemName: "arrow.uturn.backward")
-                            .font(.title3)
+               swipeModel.current != nil
+                || !deletionManager.pendingAssets.isEmpty {
+                HStack(spacing: 12) {
+                    if swipeModel.current != nil {
+                        Button {
+                            prepareShare()
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.title3)
+                                .frame(
+                                    width: PendingDeletionLayout.buttonHeight,
+                                    height: PendingDeletionLayout.buttonHeight,
+                                    alignment: .center
+                                )
+                        }
+                        .buttonStyle(.glassProminent)
+                        .buttonBorderShape(.circle)
+                        .tint(.blue)
+                        .disabled(isPreparingShare)
+                        .accessibilityLabel("Share Current Media")
+                    }
+
+                    if !deletionManager.pendingAssets.isEmpty {
+                        Button {
+                            swipeModel.undoLastDeletion()
+                        } label: {
+                            Image(systemName: "arrow.uturn.backward")
+                                .font(.title3)
+                                .frame(
+                                    width: PendingDeletionLayout.buttonHeight,
+                                    height: PendingDeletionLayout.buttonHeight,
+                                    alignment: .center
+                                )
+                        }
+                        .buttonStyle(.glass)
+                        .buttonBorderShape(.circle)
+                        .accessibilityLabel("Undo Last Deletion")
+
+                        Button {
+                            isShowingPendingDeletions = true
+                        } label: {
+                            Text(
+                                "Pending Deletions (\(deletionManager.pendingAssets.count))"
+                            )
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 14)
                             .frame(
-                                width: PendingDeletionLayout.buttonHeight,
                                 height: PendingDeletionLayout.buttonHeight
                             )
+                        }
+                        .buttonStyle(.glass)
+                        .buttonBorderShape(.capsule)
+                        .accessibilityLabel("Pending Deletions")
                     }
-                    .buttonStyle(.glass)
-                    .buttonBorderShape(.circle)
-                    .accessibilityLabel("Undo Last Deletion")
-
-                    Button {
-                        isShowingPendingDeletions = true
-                    } label: {
-                        Text(
-                            "Pending Deletions (\(deletionManager.pendingAssets.count))"
-                        )
-                        .font(.subheadline.weight(.semibold))
-                        .frame(
-                            height: PendingDeletionLayout.buttonHeight
-                        )
-                    }
-                    .padding(.horizontal, 14)
-                    .buttonStyle(.glass)
-                    .buttonBorderShape(.capsule)
-                    .accessibilityLabel("Pending Deletions")
                 }
                 .frame(height: PendingDeletionLayout.buttonHeight)
                 .padding(.bottom, PendingDeletionLayout.buttonBottomInset)
@@ -89,7 +115,54 @@ struct ContentView: View {
         .sheet(isPresented: $isShowingPendingDeletions) {
             PendingDeletionSheet(deletionManager: deletionManager)
         }
+        .sheet(item: $sharedMedia) { media in
+            ActivityShareSheet(fileURL: media.fileURL) {
+                try? FileManager.default.removeItem(at: media.fileURL)
+                sharedMedia = nil
+            }
+        }
     }
+
+    private func prepareShare() {
+        guard let asset = swipeModel.current else {
+            return
+        }
+
+        isPreparingShare = true
+        PhotoService.shared.requestShareFile(asset: asset) { fileURL in
+            isPreparingShare = false
+
+            if let fileURL {
+                sharedMedia = SharedMedia(fileURL: fileURL)
+            }
+        }
+    }
+}
+
+private struct SharedMedia: Identifiable {
+    let id = UUID()
+    let fileURL: URL
+}
+
+private struct ActivityShareSheet: UIViewControllerRepresentable {
+    let fileURL: URL
+    let completion: () -> Void
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(
+            activityItems: [fileURL],
+            applicationActivities: nil
+        )
+        controller.completionWithItemsHandler = { _, _, _, _ in
+            completion()
+        }
+        return controller
+    }
+
+    func updateUIViewController(
+        _ uiViewController: UIActivityViewController,
+        context: Context
+    ) {}
 }
 
 #Preview {
