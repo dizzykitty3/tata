@@ -17,6 +17,7 @@ struct PendingDeletionSheet: View {
 
     @State private var isDeleting = false
     @State private var errorMessage: String?
+    @State private var selectedPhoto: PendingDeletionPhoto?
 
     private let columns = Array(
         repeating: GridItem(
@@ -39,17 +40,12 @@ struct PendingDeletionSheet: View {
                             id: \.localIdentifier
                         ) { asset in
                             GeometryReader { proxy in
-                                MediaView(
-                                    asset: asset,
-                                    showsPlaybackButton: true,
-                                    targetSize: PendingDeletionLayout.gridTargetSize,
-                                    contentMode: .fill
-                                )
-                                .frame(
-                                    width: proxy.size.width,
-                                    height: proxy.size.height
-                                )
-                                .clipped()
+                                gridMedia(for: asset)
+                                    .frame(
+                                        width: proxy.size.width,
+                                        height: proxy.size.height
+                                    )
+                                    .clipped()
                             }
                             .aspectRatio(1, contentMode: .fit)
                         }
@@ -86,6 +82,43 @@ struct PendingDeletionSheet: View {
                 Text(errorMessage ?? "Please try again.")
             }
         }
+        .sheet(item: $selectedPhoto) { photo in
+            NavigationStack {
+                ImageView(
+                    asset: photo.asset,
+                    targetSize: PHImageManagerMaximumSize,
+                    contentMode: .fit
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .navigationTitle("Photo")
+                .navigationBarTitleDisplayMode(.inline)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func gridMedia(for asset: PHAsset) -> some View {
+        if asset.mediaType == .image,
+           !asset.mediaSubtypes.contains(.photoLive) {
+            Button {
+                selectedPhoto = PendingDeletionPhoto(asset: asset)
+            } label: {
+                MediaView(
+                    asset: asset,
+                    targetSize: PendingDeletionLayout.gridTargetSize,
+                    contentMode: .fill
+                )
+            }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
+        } else {
+            MediaView(
+                asset: asset,
+                showsPlaybackButton: true,
+                targetSize: PendingDeletionLayout.gridTargetSize,
+                contentMode: .fill
+            )
+        }
     }
 
     private func deletePendingAssets() {
@@ -103,5 +136,13 @@ struct PendingDeletionSheet: View {
                 errorMessage = "The selected media could not be deleted."
             }
         }
+    }
+}
+
+private struct PendingDeletionPhoto: Identifiable {
+    let asset: PHAsset
+
+    var id: String {
+        asset.localIdentifier
     }
 }
