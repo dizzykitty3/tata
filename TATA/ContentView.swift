@@ -15,7 +15,7 @@ struct ContentView: View {
     private var swipeModel: SwipeViewModel
 
     @StateObject
-    private var dateModel: DateViewModel
+    private var timelineModel: TimelineViewModel
 
     @State private var isShowingPendingDeletions = false
     @State private var selectedTab: AppTab = .swipe
@@ -28,7 +28,7 @@ struct ContentView: View {
                 deletionManager: deletionManager
             )
         )
-        _dateModel = StateObject(wrappedValue: DateViewModel())
+        _timelineModel = StateObject(wrappedValue: TimelineViewModel())
     }
 
     var body: some View {
@@ -41,8 +41,8 @@ struct ContentView: View {
                 }
 
                 Tab("Timeline", systemImage: "calendar", value: .date) {
-                    DateView(
-                        model: dateModel,
+                    TimelineView(
+                        model: timelineModel,
                         deletionManager: deletionManager,
                         isShowingPendingDeletions: $isShowingPendingDeletions
                     )

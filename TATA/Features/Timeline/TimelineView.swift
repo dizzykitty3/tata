@@ -1,8 +1,8 @@
 import SwiftUI
 import Photos
 
-struct DateView: View {
-    @ObservedObject var model: DateViewModel
+struct TimelineView: View {
+    @ObservedObject var model: TimelineViewModel
     @ObservedObject var deletionManager: DeletionManager
     @Binding var isShowingPendingDeletions: Bool
 
@@ -40,7 +40,7 @@ struct DateView: View {
                                                 }
                                             )
                                         } label: {
-                                            DateTimelineRow(
+                                            TimelineRow(
                                                 period: period,
                                                 grouping: grouping,
                                                 deletionManager: deletionManager
@@ -100,7 +100,7 @@ struct DateView: View {
     }
 }
 
-private struct DateTimelineRow: View {
+private struct TimelineRow: View {
     let period: TimelineMediaPeriod
     let grouping: TimelineGrouping
     @ObservedObject var deletionManager: DeletionManager
@@ -109,7 +109,7 @@ private struct DateTimelineRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            DateMediaCollage(assets: Array(period.assets.prefix(3)))
+            TimelineMediaCollage(assets: Array(period.assets.prefix(3)))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(dayTitle)
@@ -197,7 +197,7 @@ private struct DateTimelineRow: View {
     }
 }
 
-private struct DateMediaCollage: View {
+private struct TimelineMediaCollage: View {
     let assets: [PHAsset]
 
     var body: some View {
@@ -238,7 +238,7 @@ struct MediaGridView: View {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 2) {
                     ForEach(visibleAssets, id: \.localIdentifier) { asset in
-                        DateDayGridCell(
+                        TimelineGridCell(
                             asset: asset,
                             isSelecting: isSelecting,
                             isSelected: selectedAssetIdentifiers.contains(
@@ -331,7 +331,7 @@ struct MediaGridView: View {
 
 }
 
-private struct DateDayGridCell: View {
+private struct TimelineGridCell: View {
     let asset: PHAsset
     let isSelecting: Bool
     let isSelected: Bool

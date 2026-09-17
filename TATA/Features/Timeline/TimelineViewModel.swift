@@ -45,7 +45,7 @@ struct TimelineMediaSection: Identifiable {
 }
 
 @MainActor
-final class DateViewModel: ObservableObject {
+final class TimelineViewModel: ObservableObject {
     @Published private(set) var sections: [TimelineMediaSection] = []
 
     private let calendar = Calendar.autoupdatingCurrent
