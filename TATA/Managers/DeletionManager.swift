@@ -56,6 +56,11 @@ final class DeletionManager: ObservableObject {
         }
     }
 
+    func clearPendingAssets() {
+        pendingAssets.removeAll()
+        sourceByAssetIdentifier.removeAll()
+    }
+
     func deleteAll(
         completion: @escaping (PhotoDeletionResult) -> Void
     ) {
@@ -73,8 +78,7 @@ final class DeletionManager: ObservableObject {
                         self.deletedMediaCount,
                         forKey: Self.deletedMediaCountKey
                     )
-                    self.pendingAssets.removeAll()
-                    self.sourceByAssetIdentifier.removeAll()
+                    self.clearPendingAssets()
                 }
                 completion(result)
             }

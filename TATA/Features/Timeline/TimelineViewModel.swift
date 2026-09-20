@@ -55,9 +55,14 @@ final class TimelineViewModel: ObservableObject {
     }
 
     func reload(grouping: TimelineGrouping) {
-        let assets = PhotoService.shared.fetchAssets()
-        let datedAssets = (0..<assets.count).compactMap { index -> (Date, PHAsset)? in
-            let asset = assets.object(at: index)
+        reload(
+            assets: PhotoService.shared.fetchAssetSnapshot(),
+            grouping: grouping
+        )
+    }
+
+    func reload(assets: [PHAsset], grouping: TimelineGrouping) {
+        let datedAssets = assets.compactMap { asset -> (Date, PHAsset)? in
 
             guard let creationDate = asset.creationDate else {
                 return nil

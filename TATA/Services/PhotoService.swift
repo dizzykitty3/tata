@@ -28,6 +28,38 @@ final class PhotoService {
         return PHAsset.fetchAssets(with: options)
     }
 
+    func fetchAssetSnapshot() -> [PHAsset] {
+        let result = fetchAssets()
+        return (0..<result.count).map { result.object(at: $0) }
+    }
+
+    func fetchAlbumSnapshot() -> [MediaAlbum] {
+        let collections = PHAssetCollection.fetchAssetCollections(
+            with: .album,
+            subtype: .any,
+            options: nil
+        )
+        let options = PHFetchOptions()
+        options.sortDescriptors = [
+            NSSortDescriptor(key: "creationDate", ascending: false)
+        ]
+
+        return (0..<collections.count).compactMap { index in
+            let collection = collections.object(at: index)
+            let assets = PHAsset.fetchAssets(in: collection, options: options)
+            let snapshot = (0..<assets.count).map(assets.object(at:))
+
+            guard !snapshot.isEmpty else {
+                return nil
+            }
+
+            return MediaAlbum(collection: collection, assets: snapshot)
+        }
+        .sorted {
+            $0.title.localizedStandardCompare($1.title) == .orderedAscending
+        }
+    }
+
     func requestImage(
         asset: PHAsset,
         size: CGSize,

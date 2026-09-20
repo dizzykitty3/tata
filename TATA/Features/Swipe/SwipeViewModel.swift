@@ -23,17 +23,17 @@ final class SwipeViewModel: ObservableObject {
     init(deletionManager: DeletionManager) {
         self.deletionManager = deletionManager
 
-        let fetchResult = service.fetchAssets()
+        assets = []
+        reset(with: service.fetchAssetSnapshot())
+    }
+
+    func reset(with assets: [PHAsset]) {
         let pendingIdentifiers = Set(
             deletionManager.pendingAssets.map(\.localIdentifier)
         )
-
-        assets = (0..<fetchResult.count).map {
-            fetchResult.object(at: $0)
-        }.filter {
+        self.assets = assets.filter {
             !pendingIdentifiers.contains($0.localIdentifier)
         }
-
         load(index: 0)
     }
 

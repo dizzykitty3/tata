@@ -11,7 +11,7 @@ private enum AlbumCategory: String, CaseIterable, Identifiable {
 }
 
 struct AlbumsView: View {
-    @StateObject private var model = AlbumViewModel()
+    @ObservedObject var model: AlbumViewModel
 
     @ObservedObject var deletionManager: DeletionManager
     @Binding var isShowingPendingDeletions: Bool

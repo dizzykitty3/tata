@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var deletionManager: DeletionManager
+    let refreshMediaLibrary: () -> Void
+    let isRefreshing: Bool
 
     @AppStorage(TimelineGrouping.storageKey)
     private var timelineGrouping = TimelineGrouping.date.rawValue
@@ -12,7 +14,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
+                Section("Preferences") {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Timeline span")
 
@@ -35,7 +37,23 @@ struct SettingsView: View {
                     )
                 }
 
-                Section {
+                Section("Media Library") {
+                    Button(action: refreshMediaLibrary) {
+                        Label(
+                            "Refresh Media Library",
+                            systemImage: "arrow.triangle.2.circlepath"
+                        )
+                    }
+                    .disabled(isRefreshing)
+
+                    Text(
+                        "Check for additions and removals in Photos. This clears your Pending Deletions list."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
+
+                Section("About") {
                     LabeledContent("Deleted Media") {
                         Text(deletionManager.deletedMediaCount, format: .number)
                             .foregroundStyle(.secondary)
@@ -72,5 +90,9 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView(deletionManager: DeletionManager())
+    SettingsView(
+        deletionManager: DeletionManager(),
+        refreshMediaLibrary: {},
+        isRefreshing: false
+    )
 }

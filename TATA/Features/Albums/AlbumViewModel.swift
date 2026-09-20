@@ -28,29 +28,10 @@ final class AlbumViewModel: ObservableObject {
     @Published private(set) var albums: [MediaAlbum] = []
 
     func reload() {
-        let collections = PHAssetCollection.fetchAssetCollections(
-            with: .album,
-            subtype: .any,
-            options: nil
-        )
-        let options = PHFetchOptions()
-        options.sortDescriptors = [
-            NSSortDescriptor(key: "creationDate", ascending: false)
-        ]
+        albums = PhotoService.shared.fetchAlbumSnapshot()
+    }
 
-        albums = (0..<collections.count).compactMap { index in
-            let collection = collections.object(at: index)
-            let fetchResult = PHAsset.fetchAssets(in: collection, options: options)
-            let assets = (0..<fetchResult.count).map(fetchResult.object(at:))
-
-            guard !assets.isEmpty else {
-                return nil
-            }
-
-            return MediaAlbum(collection: collection, assets: assets)
-        }
-        .sorted {
-            $0.title.localizedStandardCompare($1.title) == .orderedAscending
-        }
+    func replace(with albums: [MediaAlbum]) {
+        self.albums = albums
     }
 }
