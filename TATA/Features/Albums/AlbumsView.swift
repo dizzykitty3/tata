@@ -40,6 +40,7 @@ struct AlbumsView: View {
                                                 assets: album.assets,
                                                 title: album.title,
                                                 deletionManager: deletionManager,
+                                                deletionSource: .album,
                                                 refreshMedia: model.reload
                                             )
                                         } label: {

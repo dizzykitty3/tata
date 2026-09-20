@@ -35,6 +35,7 @@ struct TimelineView: View {
                                                 assets: period.assets,
                                                 title: periodTitle(for: period),
                                                 deletionManager: deletionManager,
+                                                deletionSource: .date,
                                                 refreshMedia: {
                                                     model.reload(grouping: grouping)
                                                 }
@@ -221,6 +222,7 @@ struct MediaGridView: View {
     let assets: [PHAsset]
     let title: String
     @ObservedObject var deletionManager: DeletionManager
+    let deletionSource: DeletionManager.Source
     let refreshMedia: () -> Void
 
     @State private var isSelecting = false
@@ -243,7 +245,9 @@ struct MediaGridView: View {
                             isSelecting: isSelecting,
                             isSelected: selectedAssetIdentifiers.contains(
                                 asset.localIdentifier
-                            )
+                            ),
+                            deletionManager: deletionManager,
+                            deletionSource: deletionSource
                         ) {
                             toggleSelection(for: asset)
                         } previewAction: {
@@ -286,7 +290,11 @@ struct MediaGridView: View {
         }
         .sheet(item: $selectedPhoto) { photo in
             NavigationStack {
-                MediaPhotoPreviewSheet(asset: photo.asset)
+                MediaPhotoPreviewSheet(
+                    asset: photo.asset,
+                    deletionManager: deletionManager,
+                    deletionSource: deletionSource
+                )
             }
         }
         .onDisappear {
@@ -322,7 +330,7 @@ struct MediaGridView: View {
         for asset in visibleAssets where selectedAssetIdentifiers.contains(
             asset.localIdentifier
         ) {
-            deletionManager.add(asset, source: .date)
+            deletionManager.add(asset, source: deletionSource)
         }
         selectedAssetIdentifiers.removeAll()
         isSelecting = false
@@ -335,6 +343,8 @@ private struct TimelineGridCell: View {
     let asset: PHAsset
     let isSelecting: Bool
     let isSelected: Bool
+    let deletionManager: DeletionManager
+    let deletionSource: DeletionManager.Source
     let action: () -> Void
     let previewAction: () -> Void
 
@@ -369,7 +379,9 @@ private struct TimelineGridCell: View {
             asset: asset,
             showsPlaybackButton: !isSelecting,
             targetSize: CGSize(width: 600, height: 600),
-            contentMode: .fill
+            contentMode: .fill,
+            deletionManager: deletionManager,
+            deletionSource: deletionSource
         )
         .frame(width: proxy.size.width, height: proxy.size.height)
         .clipped()

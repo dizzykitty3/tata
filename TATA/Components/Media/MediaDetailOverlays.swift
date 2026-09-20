@@ -104,8 +104,70 @@ struct MediaShareButton: View {
     }
 }
 
+struct MediaPendingDeletionButton: View {
+    let asset: PHAsset
+    let deletionManager: DeletionManager
+    let source: DeletionManager.Source
+    let dismiss: () -> Void
+
+    var body: some View {
+        Button {
+            deletionManager.add(asset, source: source)
+            dismiss()
+        } label: {
+            Image(systemName: "trash")
+                .font(.title3)
+                .frame(
+                    width: PendingDeletionLayout.buttonHeight,
+                    height: PendingDeletionLayout.buttonHeight,
+                    alignment: .center
+                )
+        }
+        .buttonStyle(.glassProminent)
+        .buttonBorderShape(.circle)
+        .tint(.red)
+        .accessibilityLabel("Move to Pending Deletions")
+    }
+}
+
+struct MediaDetailActionBar: View {
+    let asset: PHAsset
+    let deletionManager: DeletionManager?
+    let deletionSource: DeletionManager.Source?
+    let dismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            MediaShareButton(asset: asset)
+
+            if let deletionManager, let deletionSource {
+                MediaPendingDeletionButton(
+                    asset: asset,
+                    deletionManager: deletionManager,
+                    source: deletionSource,
+                    dismiss: dismiss
+                )
+            }
+        }
+    }
+}
+
 struct MediaPhotoPreviewSheet: View {
     let asset: PHAsset
+    let deletionManager: DeletionManager?
+    let deletionSource: DeletionManager.Source?
+
+    @Environment(\.dismiss) private var dismiss
+
+    init(
+        asset: PHAsset,
+        deletionManager: DeletionManager? = nil,
+        deletionSource: DeletionManager.Source? = nil
+    ) {
+        self.asset = asset
+        self.deletionManager = deletionManager
+        self.deletionSource = deletionSource
+    }
 
     var body: some View {
         ZStack {
@@ -126,7 +188,12 @@ struct MediaPhotoPreviewSheet: View {
 
                 Spacer()
 
-                MediaShareButton(asset: asset)
+                MediaDetailActionBar(
+                    asset: asset,
+                    deletionManager: deletionManager,
+                    deletionSource: deletionSource,
+                    dismiss: { dismiss() }
+                )
                     .padding(.bottom, 16)
             }
         }

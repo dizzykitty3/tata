@@ -6,6 +6,8 @@ struct VideoThumbnailView: View {
     let showsPlaybackButton: Bool
     let targetSize: CGSize
     let contentMode: ContentMode
+    let deletionManager: DeletionManager?
+    let deletionSource: DeletionManager.Source?
 
     @State private var isShowingPlayer = false
 
@@ -25,7 +27,11 @@ struct VideoThumbnailView: View {
         }
         .sheet(isPresented: $isShowingPlayer) {
             NavigationStack {
-                VideoPlayerSheet(asset: asset)
+                VideoPlayerSheet(
+                    asset: asset,
+                    deletionManager: deletionManager,
+                    deletionSource: deletionSource
+                )
                     .navigationTitle("Video Playback")
                     .navigationBarTitleDisplayMode(.inline)
             }

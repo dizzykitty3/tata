@@ -5,6 +5,20 @@ import UIKit
 
 struct VideoPlayerSheet: View {
     let asset: PHAsset
+    let deletionManager: DeletionManager?
+    let deletionSource: DeletionManager.Source?
+
+    @Environment(\.dismiss) private var dismiss
+
+    init(
+        asset: PHAsset,
+        deletionManager: DeletionManager? = nil,
+        deletionSource: DeletionManager.Source? = nil
+    ) {
+        self.asset = asset
+        self.deletionManager = deletionManager
+        self.deletionSource = deletionSource
+    }
 
     @ObservedObject
     private var muteController = MediaPlaybackMuteController.shared
@@ -38,7 +52,12 @@ struct VideoPlayerSheet: View {
 
                 Spacer()
 
-                MediaShareButton(asset: asset)
+                MediaDetailActionBar(
+                    asset: asset,
+                    deletionManager: deletionManager,
+                    deletionSource: deletionSource,
+                    dismiss: { dismiss() }
+                )
                     .padding(.bottom, 16)
             }
         }
