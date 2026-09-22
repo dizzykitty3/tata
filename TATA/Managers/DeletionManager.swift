@@ -9,7 +9,7 @@ final class DeletionManager: ObservableObject {
     enum Source {
         case swipe
         case date
-        case album
+        case category
     }
 
     @Published

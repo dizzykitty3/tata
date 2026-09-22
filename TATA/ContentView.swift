@@ -4,7 +4,7 @@ struct ContentView: View {
     private enum AppTab: Hashable {
         case swipe
         case date
-        case albums
+        case categories
         case settings
     }
 
@@ -18,7 +18,7 @@ struct ContentView: View {
     private var timelineModel: TimelineViewModel
 
     @StateObject
-    private var albumModel: AlbumViewModel
+    private var categoriesModel: CategoriesViewModel
 
     @State private var isShowingPendingDeletions = false
     @State private var selectedTab: AppTab = .swipe
@@ -40,7 +40,7 @@ struct ContentView: View {
             )
         )
         _timelineModel = StateObject(wrappedValue: TimelineViewModel())
-        _albumModel = StateObject(wrappedValue: AlbumViewModel())
+        _categoriesModel = StateObject(wrappedValue: CategoriesViewModel())
     }
 
     var body: some View {
@@ -64,10 +64,10 @@ struct ContentView: View {
                     }
                 }
 
-                Tab("Albums", systemImage: "photo.stack", value: .albums) {
+                Tab("Categories", systemImage: "square.grid.2x2", value: .categories) {
                     mediaTabContent {
-                        AlbumsView(
-                            model: albumModel,
+                        CategoriesView(
+                            model: categoriesModel,
                             deletionManager: deletionManager,
                             isShowingPendingDeletions: $isShowingPendingDeletions
                         )
@@ -221,7 +221,7 @@ struct ContentView: View {
                     assets: assets,
                     grouping: currentTimelineGrouping
                 )
-                albumModel.replace(with: albums)
+                categoriesModel.replace(with: albums, assets: assets)
                 refreshGeneration += 1
                 isRefreshingMediaLibrary = false
 

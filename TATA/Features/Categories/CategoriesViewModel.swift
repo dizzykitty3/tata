@@ -24,14 +24,17 @@ struct MediaAlbum: Identifiable {
 }
 
 @MainActor
-final class AlbumViewModel: ObservableObject {
+final class CategoriesViewModel: ObservableObject {
     @Published private(set) var albums: [MediaAlbum] = []
+    @Published private(set) var assets: [PHAsset] = []
 
     func reload() {
         albums = PhotoService.shared.fetchAlbumSnapshot()
+        assets = PhotoService.shared.fetchAssetSnapshot()
     }
 
-    func replace(with albums: [MediaAlbum]) {
+    func replace(with albums: [MediaAlbum], assets: [PHAsset]) {
         self.albums = albums
+        self.assets = assets
     }
 }
