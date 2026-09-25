@@ -140,9 +140,7 @@ struct ContentView: View {
                     .foregroundStyle(Color(uiColor: .label))
                     .padding(.horizontal, 16)
                     .frame(height: 40)
-                    .background(Color(uiColor: .systemGray5))
-                    .clipShape(Capsule())
-                    .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
+                    .glassEffect(.regular, in: .capsule)
                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
                     .accessibilityAddTraits(.isStaticText)
                     .frame(
@@ -165,7 +163,8 @@ struct ContentView: View {
                         refreshMediaLibrary()
                     }
                     .font(.subheadline.weight(.semibold))
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.capsule)
                     .controlSize(.small)
                     .accessibilityHint("Refreshes your media library")
                 }
@@ -173,9 +172,7 @@ struct ContentView: View {
                 .padding(.leading, 16)
                 .padding(.trailing, 8)
                 .frame(height: 40)
-                .background(Color(uiColor: .systemGray5))
-                .clipShape(Capsule())
-                .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
+                .glassEffect(.regular, in: .capsule)
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 .padding(.bottom, refreshSuggestionBottomInset)
             }
