@@ -230,29 +230,22 @@ struct MediaGridView: View {
     @State private var selectedPhoto: DatePhoto?
     @State private var didChangePendingDeletions = false
 
-    private let columns = Array(
-        repeating: GridItem(.flexible(), spacing: 2),
-        count: 3
-    )
-
     var body: some View {
         ZStack(alignment: .bottom) {
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: 2) {
-                    ForEach(visibleAssets, id: \.localIdentifier) { asset in
-                        TimelineGridCell(
-                            asset: asset,
-                            isSelecting: isSelecting,
-                            isSelected: selectedAssetIdentifiers.contains(
-                                asset.localIdentifier
-                            ),
-                            deletionManager: deletionManager,
-                            deletionSource: deletionSource
-                        ) {
-                            toggleSelection(for: asset)
-                        } previewAction: {
-                            selectedPhoto = DatePhoto(asset: asset)
-                        }
+            AdaptiveMediaGrid {
+                ForEach(visibleAssets, id: \.localIdentifier) { asset in
+                    TimelineGridCell(
+                        asset: asset,
+                        isSelecting: isSelecting,
+                        isSelected: selectedAssetIdentifiers.contains(
+                            asset.localIdentifier
+                        ),
+                        deletionManager: deletionManager,
+                        deletionSource: deletionSource
+                    ) {
+                        toggleSelection(for: asset)
+                    } previewAction: {
+                        selectedPhoto = DatePhoto(asset: asset)
                     }
                 }
             }

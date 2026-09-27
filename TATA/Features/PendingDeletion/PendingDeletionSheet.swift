@@ -19,39 +19,26 @@ struct PendingDeletionSheet: View {
     @State private var errorMessage: String?
     @State private var selectedPhoto: PendingDeletionPhoto?
 
-    private let columns = Array(
-        repeating: GridItem(
-            .flexible(),
-            spacing: PendingDeletionLayout.gridSpacing
-        ),
-        count: 3
-    )
-
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                ScrollView {
-                    LazyVGrid(
-                        columns: columns,
-                        spacing: PendingDeletionLayout.gridSpacing
-                    ) {
-                        ForEach(
-                            deletionManager.pendingAssets,
-                            id: \.localIdentifier
-                        ) { asset in
-                            GeometryReader { proxy in
-                                gridMedia(for: asset)
-                                    .frame(
-                                        width: proxy.size.width,
-                                        height: proxy.size.height
-                                    )
-                                    .clipped()
-                            }
-                            .aspectRatio(1, contentMode: .fit)
+                AdaptiveMediaGrid {
+                    ForEach(
+                        deletionManager.pendingAssets,
+                        id: \.localIdentifier
+                    ) { asset in
+                        GeometryReader { proxy in
+                            gridMedia(for: asset)
+                                .frame(
+                                    width: proxy.size.width,
+                                    height: proxy.size.height
+                                )
+                                .clipped()
                         }
+                        .aspectRatio(1, contentMode: .fit)
                     }
-                    .padding(.vertical, 8)
                 }
+                .safeAreaPadding(.vertical, 8)
 
                 Button {
                     deletePendingAssets()
