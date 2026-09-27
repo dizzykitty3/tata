@@ -137,16 +137,18 @@ struct MediaDetailActionBar: View {
     let dismiss: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            MediaShareButton(asset: asset)
+        GlassEffectContainer(spacing: 8) {
+            HStack(spacing: 8) {
+                MediaShareButton(asset: asset)
 
-            if let deletionManager, let deletionSource {
-                MediaPendingDeletionButton(
-                    asset: asset,
-                    deletionManager: deletionManager,
-                    source: deletionSource,
-                    dismiss: dismiss
-                )
+                if let deletionManager, let deletionSource {
+                    MediaPendingDeletionButton(
+                        asset: asset,
+                        deletionManager: deletionManager,
+                        source: deletionSource,
+                        dismiss: dismiss
+                    )
+                }
             }
         }
     }
