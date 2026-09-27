@@ -134,6 +134,83 @@ struct OnboardingView: View {
     }
 }
 
+struct UserGuideSheet: View {
+    static let hasCompletedStorageKey = "hasCompletedUserGuide"
+
+    let onComplete: () -> Void
+
+    @Environment(\.dismiss)
+    private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Welcome to TATA")
+                            .font(.largeTitle.weight(.bold))
+
+                        Text("A quick guide to reviewing your photo library.")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    VStack(alignment: .leading, spacing: 24) {
+                        GuideStep(
+                            systemImage: "hand.draw",
+                            text: "In the Swipe tab, swipe up to mark media for deletion. Swipe left or right to move to the next or previous item."
+                        )
+
+                        GuideStep(
+                            systemImage: "arrow.uturn.backward",
+                            text: "After marking media, you can undo your most recent action or review everything in Pending Deletions."
+                        )
+
+                        GuideStep(
+                            systemImage: "square.grid.2x2",
+                            text: "In the Timeline and Categories tabs, you can mark multiple items for deletion by date, album, or media type."
+                        )
+                    }
+                }
+                .padding(24)
+            }
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    onComplete()
+                    dismiss()
+                } label: {
+                    Text("OK")
+                        .padding(.horizontal, 28)
+                        .padding(.vertical, 10)
+                }
+                .font(.body.weight(.semibold))
+                .buttonStyle(.glassProminent)
+                .buttonBorderShape(.capsule)
+                .padding(.vertical, 12)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
+
+private struct GuideStep: View {
+    let systemImage: String
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: systemImage)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.tint)
+                .frame(width: 28, height: 28)
+
+            Text(text)
+                .font(.body)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+}
+
 #Preview {
     OnboardingView()
 }

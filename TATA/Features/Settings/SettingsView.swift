@@ -4,6 +4,7 @@ struct SettingsView: View {
     @ObservedObject var deletionManager: DeletionManager
     let refreshMediaLibrary: () -> Void
     let isRefreshing: Bool
+    let presentUserGuide: () -> Void
 
     @AppStorage(TimelineGrouping.storageKey)
     private var timelineGrouping = TimelineGrouping.date.rawValue
@@ -37,6 +38,10 @@ struct SettingsView: View {
                     Text(
                         "Check for additions and removals in Photos. This clears your Pending Deletions list."
                     )
+                }
+
+                Section {
+                    Button("Show User Guide", action: presentUserGuide)
                 }
 
                 Section {
@@ -84,6 +89,7 @@ struct SettingsView: View {
     SettingsView(
         deletionManager: DeletionManager(),
         refreshMediaLibrary: {},
-        isRefreshing: false
+        isRefreshing: false,
+        presentUserGuide: {}
     )
 }

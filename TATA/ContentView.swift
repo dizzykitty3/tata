@@ -28,6 +28,11 @@ struct ContentView: View {
     @State private var showsRefreshSuggestion = false
     @State private var backgroundedAt: Date?
 
+    @AppStorage(UserGuideSheet.hasCompletedStorageKey)
+    private var hasCompletedUserGuide = false
+
+    @State private var isShowingUserGuide = false
+
     @Environment(\.scenePhase)
     private var scenePhase
 
@@ -79,7 +84,10 @@ struct ContentView: View {
                     SettingsView(
                         deletionManager: deletionManager,
                         refreshMediaLibrary: refreshMediaLibrary,
-                        isRefreshing: isRefreshingMediaLibrary
+                        isRefreshing: isRefreshingMediaLibrary,
+                        presentUserGuide: {
+                            isShowingUserGuide = true
+                        }
                     )
                 }
             }
@@ -181,8 +189,19 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhaseChange(newPhase)
         }
+        .onAppear {
+            if !hasCompletedUserGuide {
+                isShowingUserGuide = true
+            }
+        }
         .sheet(isPresented: $isShowingPendingDeletions) {
             PendingDeletionSheet(deletionManager: deletionManager)
+        }
+        .sheet(isPresented: $isShowingUserGuide) {
+            UserGuideSheet {
+                hasCompletedUserGuide = true
+            }
+            .presentationDetents([.medium])
         }
     }
 
