@@ -146,13 +146,8 @@ struct UserGuideSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Welcome to TATA")
-                            .font(.largeTitle.weight(.bold))
-
-                        Text("A quick guide to reviewing your photo library.")
-                            .foregroundStyle(.secondary)
-                    }
+                    Text("User Guide")
+                        .font(.largeTitle.weight(.bold))
 
                     VStack(alignment: .leading, spacing: 24) {
                         GuideStep(
@@ -206,8 +201,9 @@ private struct GuideStep: View {
             Text(text)
                 .font(.body)
                 .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
