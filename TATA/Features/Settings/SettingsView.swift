@@ -14,47 +14,33 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Preferences") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Timeline span")
-
-                        Text("Choose how media is grouped in Timeline.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-
-                        Picker("Timeline span", selection: $timelineGrouping) {
-                            ForEach(TimelineGrouping.allCases) { grouping in
-                                Text(grouping.title).tag(grouping.rawValue)
-                            }
+                Section {
+                    Picker("Timeline span", selection: $timelineGrouping) {
+                        ForEach(TimelineGrouping.allCases) { grouping in
+                            Text(grouping.title).tag(grouping.rawValue)
                         }
-                        .labelsHidden()
-                        .pickerStyle(.segmented)
                     }
+                    .pickerStyle(.navigationLink)
+                }
 
+                Section {
                     Toggle(
-                        "Mute videos and Live Photos by default",
+                        "Mute by default",
                         isOn: $muteMediaByDefault
                     )
                 }
 
-                Section("Media Library") {
-                    Button(action: refreshMediaLibrary) {
-                        Label(
-                            "Refresh Media Library",
-                            systemImage: "arrow.triangle.2.circlepath"
-                        )
-                    }
-                    .disabled(isRefreshing)
-
+                Section {
+                    Button("Refresh Media Library", action: refreshMediaLibrary)
+                        .disabled(isRefreshing)
+                } footer: {
                     Text(
                         "Check for additions and removals in Photos. This clears your Pending Deletions list."
                     )
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
                 }
 
-                Section("About") {
-                    LabeledContent("Deleted Media") {
+                Section {
+                    LabeledContent("Deleted media") {
                         Text(deletionManager.deletedMediaCount, format: .number)
                             .foregroundStyle(.secondary)
                     }
