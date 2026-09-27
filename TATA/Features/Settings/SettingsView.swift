@@ -61,6 +61,11 @@ struct SettingsView: View {
 
                     LabeledContent("Version", value: versionString)
 
+                    Link(
+                        "GitHub Repository",
+                        destination: URL(string: "https://github.com/dizzykitty3/tata")!
+                    )
+
                     Button("Open App Settings") {
                         openSettings()
                     }
