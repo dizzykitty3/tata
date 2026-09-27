@@ -55,7 +55,7 @@ struct PendingDeletionSheet: View {
                 .disabled(isDeleting)
                 .padding(.bottom, 16)
             }
-            .navigationTitle("Pending Deletions")
+            .navigationTitle("Pending Deletions (\(deletionManager.pendingAssets.count))")
             .navigationBarTitleDisplayMode(.inline)
             .alert(
                 "Unable to Delete",

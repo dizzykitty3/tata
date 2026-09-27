@@ -255,7 +255,7 @@ struct MediaGridView: View {
                     moveSelectionToPendingDeletions()
                 } label: {
                     Label(
-                        "Move to Pending Deletions",
+                        "Move to Pending Deletions (\(selectedAssetIdentifiers.count))",
                         systemImage: "trash"
                     )
                     .padding(.horizontal, 18)
