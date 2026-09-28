@@ -22,9 +22,7 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.navigationLink)
-                }
 
-                Section {
                     Toggle(
                         "Mute by default",
                         isOn: $muteMediaByDefault
