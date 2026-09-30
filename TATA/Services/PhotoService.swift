@@ -134,6 +134,48 @@ final class PhotoService {
         }
     }
 
+    /// Counts the current video resource without retaining its contents in memory.
+    /// Cancelling the sheet task also cancels any pending iCloud resource request.
+    func videoFileSize(asset: PHAsset) async throws -> Int64 {
+        let resources = PHAssetResource.assetResources(for: asset)
+        guard let resource = resources.first(where: { $0.type == .fullSizeVideo })
+            ?? resources.first(where: { $0.type == .video }) else {
+            throw CocoaError(.fileReadNoSuchFile)
+        }
+
+        let counts = AsyncThrowingStream<Int, Error> { continuation in
+            let options = PHAssetResourceRequestOptions()
+            options.isNetworkAccessAllowed = true
+            let resourceManager = PHAssetResourceManager.default()
+            let requestID = resourceManager.requestData(
+                for: resource,
+                options: options,
+                dataReceivedHandler: { data in
+                    continuation.yield(data.count)
+                },
+                completionHandler: { error in
+                    if let error {
+                        continuation.finish(throwing: error)
+                    } else {
+                        continuation.finish()
+                    }
+                }
+            )
+            continuation.onTermination = { termination in
+                if case .cancelled = termination {
+                    resourceManager.cancelDataRequest(requestID)
+                }
+            }
+        }
+
+        var total: Int64 = 0
+        for try await count in counts {
+            total += Int64(count)
+        }
+        try Task.checkCancellation()
+        return total
+    }
+
     func requestShareFile(
         asset: PHAsset,
         completion: @escaping (URL?) -> Void

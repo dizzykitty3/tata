@@ -44,7 +44,10 @@ struct VideoPlayerSheet: View {
 
             VStack {
                 HStack {
-                    IncludedAlbumsPills(asset: asset)
+                    VStack(alignment: .leading, spacing: 6) {
+                        IncludedAlbumsPills(asset: asset)
+                        VideoMetadataPill(asset: asset)
+                    }
                     Spacer()
                 }
                 .padding(.top, 12)
@@ -128,5 +131,56 @@ final class PlayerContainerView: UIView {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+}
+
+private struct VideoMetadataPill: View {
+    let asset: PHAsset
+
+    @State private var fileSize: Int64?
+    @State private var isLoadingSize = true
+
+    var body: some View {
+        Text("\(formattedDuration) \(fileSize.map(Self.formatSize) ?? (isLoadingSize ? "…" : "—"))")
+            .font(.caption.weight(.medium))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Color(uiColor: .systemGray).opacity(0.55),
+                in: Capsule()
+            )
+            .task(id: asset.localIdentifier) {
+                fileSize = nil
+                isLoadingSize = true
+                defer { isLoadingSize = false }
+                do {
+                    let size = try await PhotoService.shared.videoFileSize(asset: asset)
+                    try Task.checkCancellation()
+                    fileSize = size
+                } catch {
+                    // Keep the duration visible if the resource is unavailable.
+                }
+            }
+    }
+
+    private var formattedDuration: String {
+        let duration = asset.duration
+        let seconds = duration.isFinite ? Int(max(0, duration)) : 0
+        if seconds >= 3600 {
+            return String(format: "%02d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
+        }
+        return String(format: "%02d:%02d", seconds / 60, seconds % 60)
+    }
+
+    private static func formatSize(_ bytes: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        formatter.allowedUnits = [.useMB, .useGB]
+        formatter.includesUnit = true
+        formatter.includesCount = true
+        formatter.isAdaptive = true
+        return formatter.string(fromByteCount: bytes)
+            .filter { !$0.isWhitespace }
     }
 }
