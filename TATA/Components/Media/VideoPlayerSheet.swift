@@ -173,7 +173,7 @@ private struct VideoMetadataPill: View {
         return String(format: "%02d:%02d", seconds / 60, seconds % 60)
     }
 
-    private static func formatSize(_ bytes: Int64) -> String {
+    nonisolated private static func formatSize(_ bytes: Int64) -> String {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
         formatter.allowedUnits = [.useMB, .useGB]
