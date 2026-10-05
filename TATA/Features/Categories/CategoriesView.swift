@@ -54,7 +54,8 @@ struct CategoriesView: View {
                                     } label: {
                                         CategoryMediaRow(
                                             title: category.title,
-                                            assets: category.assets
+                                            assets: category.assets,
+                                            deletionManager: deletionManager
                                         )
                                     }
                                 }
@@ -105,7 +106,8 @@ struct CategoriesView: View {
                     } label: {
                         CategoryMediaRow(
                             title: album.title,
-                            assets: album.assets
+                            assets: album.assets,
+                            deletionManager: deletionManager
                         )
                     }
                 }
@@ -152,6 +154,16 @@ struct CategoriesView: View {
 private struct CategoryMediaRow: View {
     let title: String
     let assets: [PHAsset]
+    @ObservedObject var deletionManager: DeletionManager
+
+    private var mediaCount: Int {
+        let pendingIdentifiers = Set(
+            deletionManager.pendingAssets.map(\.localIdentifier)
+        )
+        return assets.filter {
+            !pendingIdentifiers.contains($0.localIdentifier)
+        }.count
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -161,7 +173,7 @@ private struct CategoryMediaRow: View {
                 Text(title)
                     .font(.body.weight(.semibold))
 
-                Text("\(assets.count) \(assets.count == 1 ? "item" : "items")")
+                MediaCountText(text: "\(mediaCount) \(mediaCount == 1 ? "item" : "items")")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

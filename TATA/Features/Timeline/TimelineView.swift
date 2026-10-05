@@ -122,16 +122,9 @@ private struct TimelineRow: View {
                     .foregroundStyle(.secondary)
                 }
 
-                Text(mediaSummary)
+                MediaCountText(text: mediaSummary)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .id(mediaSummary)
-                    .transition(.opacity)
-                    .contentTransition(.opacity)
-                    .animation(
-                        .easeInOut(duration: 0.2),
-                        value: mediaSummary
-                    )
             }
         }
         .padding(.vertical, 4)
