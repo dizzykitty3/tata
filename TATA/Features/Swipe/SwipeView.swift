@@ -115,7 +115,7 @@ struct SwipeView: View {
             .ignoresSafeArea()
             .overlay(alignment: .topLeading) {
                 if let asset = model.current {
-                    IncludedAlbumsPills(asset: asset)
+                    MediaInfoOverlay(asset: asset)
                         .padding(.top, safeAreaProxy.safeAreaInsets.top + 6)
                         .padding(.leading, 16)
                 }

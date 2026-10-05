@@ -134,15 +134,43 @@ final class PhotoService {
         }
     }
 
-    /// Counts the current video resource without retaining its contents in memory.
-    /// Cancelling the sheet task also cancels any pending iCloud resource request.
-    func videoFileSize(asset: PHAsset) async throws -> Int64 {
+    /// Counts the current media representation, including both parts of a Live Photo.
+    func mediaFileSize(asset: PHAsset) async throws -> Int64 {
         let resources = PHAssetResource.assetResources(for: asset)
-        guard let resource = resources.first(where: { $0.type == .fullSizeVideo })
-            ?? resources.first(where: { $0.type == .video }) else {
-            throw CocoaError(.fileReadNoSuchFile)
+        var selected: [PHAssetResource] = []
+
+        if asset.mediaType == .video {
+            if let video = resources.first(where: { $0.type == .fullSizeVideo })
+                ?? resources.first(where: { $0.type == .video }) {
+                selected.append(video)
+            }
+        } else {
+            if let photo = resources.first(where: { $0.type == .fullSizePhoto })
+                ?? resources.first(where: { $0.type == .photo }) {
+                selected.append(photo)
+            }
+            if asset.mediaSubtypes.contains(.photoLive) {
+                guard let video = resources.first(where: { $0.type == .fullSizePairedVideo })
+                    ?? resources.first(where: { $0.type == .pairedVideo }) else {
+                    throw CocoaError(.fileReadNoSuchFile)
+                }
+                selected.append(video)
+            }
         }
 
+        guard !selected.isEmpty else {
+            throw CocoaError(.fileReadNoSuchFile)
+        }
+        var total: Int64 = 0
+        for resource in selected {
+            try Task.checkCancellation()
+            total += try await resourceFileSize(resource)
+        }
+        return total
+    }
+
+    /// Streams byte counts without retaining media data; cancellation stops the request.
+    private func resourceFileSize(_ resource: PHAssetResource) async throws -> Int64 {
         let counts = AsyncThrowingStream<Int, Error> { continuation in
             let options = PHAssetResourceRequestOptions()
             options.isNetworkAccessAllowed = true

@@ -182,7 +182,7 @@ struct MediaPhotoPreviewSheet: View {
 
             VStack {
                 HStack {
-                    IncludedAlbumsPills(asset: asset)
+                    MediaInfoOverlay(asset: asset)
                     Spacer()
                 }
                 .padding(.top, 12)
@@ -228,4 +228,88 @@ struct ActivityShareSheet: UIViewControllerRepresentable {
         _ uiViewController: UIActivityViewController,
         context: Context
     ) {}
+}
+
+struct MediaInfoOverlay: View {
+    let asset: PHAsset
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            VStack(alignment: .leading, spacing: 6) {
+                IncludedAlbumsPills(asset: asset)
+                MediaMetadataPill(asset: asset)
+            }
+            .id(asset.localIdentifier)
+            .transition(.opacity)
+        }
+        .animation(
+            reduceMotion ? nil : .easeInOut(duration: 0.2),
+            value: asset.localIdentifier
+        )
+    }
+}
+
+private struct MediaMetadataPill: View {
+    let asset: PHAsset
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    @State private var fileSize: Int64?
+    @State private var isLoadingSize = true
+
+    var body: some View {
+        Text(metadataText)
+            .contentTransition(.opacity)
+            .font(.caption.weight(.medium))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Color(uiColor: .systemGray).opacity(0.55),
+                in: Capsule()
+            )
+            .animation(
+                reduceMotion ? nil : .easeInOut(duration: 0.2),
+                value: metadataText
+            )
+            .task(id: asset.localIdentifier) {
+                fileSize = nil
+                isLoadingSize = true
+                defer { isLoadingSize = false }
+                do {
+                    let size = try await PhotoService.shared.mediaFileSize(asset: asset)
+                    try Task.checkCancellation()
+                    fileSize = size
+                } catch {
+                    // Show an unavailable placeholder when the resource cannot be read.
+                }
+            }
+    }
+
+    private var metadataText: String {
+        let size = fileSize.map(Self.formatSize) ?? (isLoadingSize ? "…" : "—")
+        return asset.mediaType == .video ? "\(formattedDuration) \(size)" : size
+    }
+
+    private var formattedDuration: String {
+        let duration = asset.duration
+        let seconds = duration.isFinite ? Int(max(0, duration)) : 0
+        if seconds >= 3600 {
+            return String(format: "%02d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
+        }
+        return String(format: "%02d:%02d", seconds / 60, seconds % 60)
+    }
+
+    nonisolated private static func formatSize(_ bytes: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        formatter.allowedUnits = [.useMB, .useGB]
+        formatter.includesUnit = true
+        formatter.includesCount = true
+        formatter.isAdaptive = true
+        return formatter.string(fromByteCount: bytes)
+            .filter { !$0.isWhitespace }
+    }
 }

@@ -77,7 +77,7 @@ struct LivePhotoPlayerSheet: View {
 
             VStack {
                 HStack {
-                    IncludedAlbumsPills(asset: asset)
+                    MediaInfoOverlay(asset: asset)
                     Spacer()
                 }
                 .padding(.top, 12)
