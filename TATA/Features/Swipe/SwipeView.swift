@@ -112,7 +112,7 @@ struct SwipeView: View {
                 .contentShape(Rectangle())
                 .gesture(dragGesture)
             }
-            .ignoresSafeArea()
+            .ignoresSafeArea(.container, edges: .vertical)
             .overlay(alignment: .topLeading) {
                 if let asset = model.current {
                     MediaInfoOverlay(asset: asset)

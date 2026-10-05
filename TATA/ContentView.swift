@@ -56,6 +56,9 @@ struct ContentView: View {
                         SwipeView(model: swipeModel)
                             .id(refreshGeneration)
                     }
+                    .overlay(alignment: .bottom) {
+                        swipeActions
+                    }
                 }
 
                 Tab("Timeline", systemImage: "calendar", value: .date) {
@@ -91,58 +94,8 @@ struct ContentView: View {
                     )
                 }
             }
-
-            if selectedTab == .swipe,
-               (swipeModel.current != nil
-                || !deletionManager.pendingAssets.isEmpty) {
-                GlassEffectContainer(spacing: 8) {
-                    HStack(spacing: 8) {
-                        if swipeModel.current != nil {
-                            if let asset = swipeModel.current {
-                                MediaShareButton(asset: asset)
-                                    .accessibilityLabel("Share Current Media")
-                            }
-                        }
-
-                        if !deletionManager.pendingAssets.isEmpty {
-                            if deletionManager.hasPendingAssets(from: .swipe) {
-                            Button {
-                                swipeModel.undoLastDeletion()
-                            } label: {
-                                Image(systemName: "arrow.uturn.backward")
-                                    .font(.title3)
-                                    .frame(
-                                        width: PendingDeletionLayout.buttonHeight,
-                                        height: PendingDeletionLayout.buttonHeight,
-                                        alignment: .center
-                                    )
-                            }
-                            .buttonStyle(.glass)
-                            .buttonBorderShape(.circle)
-                            .accessibilityLabel("Undo Last Deletion")
-                            }
-
-                            Button {
-                                isShowingPendingDeletions = true
-                            } label: {
-                                Text(
-                                    "Pending Deletions (\(deletionManager.pendingAssets.count))"
-                                )
-                                .font(.subheadline.weight(.semibold))
-                                .padding(.horizontal, 14)
-                                .frame(
-                                    height: PendingDeletionLayout.buttonHeight
-                                )
-                            }
-                            .buttonStyle(.glass)
-                            .buttonBorderShape(.capsule)
-                            .accessibilityLabel("Pending Deletions")
-                        }
-                    }
-                    .frame(height: PendingDeletionLayout.buttonHeight)
-                    }
-                    .padding(.bottom, PendingDeletionLayout.buttonBottomInset)
-                }
+            .tabViewStyle(.sidebarAdaptable)
+            .defaultAdaptableTabBarPlacement(.sidebar)
 
             if showsRefreshConfirmation {
                 Label("Media Library Refreshed", systemImage: "checkmark")
@@ -206,6 +159,57 @@ struct ContentView: View {
             .presentationDetents([.medium])
         }
     }
+
+    @ViewBuilder
+    private var swipeActions: some View {
+    if swipeModel.current != nil || !deletionManager.pendingAssets.isEmpty {
+        GlassEffectContainer(spacing: 8) {
+            HStack(spacing: 8) {
+                if swipeModel.current != nil {
+                    if let asset = swipeModel.current {
+                            MediaShareButton(asset: asset)
+                                .accessibilityLabel("Share Current Media")
+                    }
+                }
+                if !deletionManager.pendingAssets.isEmpty {
+                    if deletionManager.hasPendingAssets(from: .swipe) {
+                        Button {
+                            swipeModel.undoLastDeletion()
+                        } label: {
+                            Image(systemName: "arrow.uturn.backward")
+                                .font(.title3)
+                                .frame(
+                                    width: PendingDeletionLayout.buttonHeight,
+                                    height: PendingDeletionLayout.buttonHeight,
+                                    alignment: .center
+                                )
+                        }
+                        .buttonStyle(.glass)
+                        .buttonBorderShape(.circle)
+                        .accessibilityLabel("Undo Last Deletion")
+                    }
+                    Button {
+                            isShowingPendingDeletions = true
+                    } label: {
+                            Text(
+                                "Pending Deletions (\(deletionManager.pendingAssets.count))"
+                            )
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 14)
+                            .frame(
+                                height: PendingDeletionLayout.buttonHeight
+                            )
+                    }
+                        .buttonStyle(.glass)
+                        .buttonBorderShape(.capsule)
+                        .accessibilityLabel("Pending Deletions")
+                }
+            }
+                .frame(height: PendingDeletionLayout.buttonHeight)
+        }
+                .padding(.bottom, 16)
+    }
+}
 
     @ViewBuilder
     private func mediaTabContent<Content: View>(
