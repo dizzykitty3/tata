@@ -235,12 +235,36 @@ struct MediaInfoOverlay: View {
     let asset: PHAsset
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(MediaPlaybackMuteController.defaultMuteKey)
+    private var muteMediaByDefault = false
+    @ObservedObject private var muteController = MediaPlaybackMuteController.shared
+
+    private var showsMutedPill: Bool {
+        (asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive))
+            && muteMediaByDefault
+            && !muteController.hasManualVolumeOverride
+    }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             // The album group supplies spacing only when it contains pills.
             VStack(alignment: .leading, spacing: 0) {
                 MediaMetadataPill(asset: asset)
+
+                if showsMutedPill {
+                    Text("Muted")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            Color(uiColor: .systemGray).opacity(0.55),
+                            in: Capsule()
+                        )
+                        .padding(.top, 6)
+                        .transition(.opacity)
+                }
+
                 IncludedAlbumsPills(asset: asset)
             }
             .id(asset.localIdentifier)
@@ -249,6 +273,10 @@ struct MediaInfoOverlay: View {
         .animation(
             reduceMotion ? nil : .easeInOut(duration: 0.2),
             value: asset.localIdentifier
+        )
+        .animation(
+            reduceMotion ? nil : .easeInOut(duration: 0.2),
+            value: showsMutedPill
         )
     }
 }
@@ -292,7 +320,7 @@ private struct MediaMetadataPill: View {
 
     private var metadataText: String {
         let size = fileSize.map(Self.formatSize) ?? (isLoadingSize ? "…" : "—")
-        return asset.mediaType == .video ? "\(formattedDuration) \(size)" : size
+        return asset.mediaType == .video ? "\(size) \(formattedDuration)" : size
     }
 
     private var formattedDuration: String {
