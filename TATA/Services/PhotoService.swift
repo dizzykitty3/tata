@@ -16,6 +16,7 @@ final class PhotoService {
     private var cachedAssets: [PHAsset] = []
     private let imageCache = NSCache<NSString, UIImage>()
     private let videoCache = NSCache<NSString, AVAsset>()
+    private let fileSizeCache = NSCache<NSString, NSNumber>()
 
     private init() {}
 
@@ -136,6 +137,11 @@ final class PhotoService {
 
     /// Counts the current media representation, including both parts of a Live Photo.
     func mediaFileSize(asset: PHAsset) async throws -> Int64 {
+        try Task.checkCancellation()
+        let cacheKey = "\(asset.localIdentifier)-\(asset.modificationDate?.timeIntervalSince1970 ?? 0)" as NSString
+        if let cached = fileSizeCache.object(forKey: cacheKey) {
+            return cached.int64Value
+        }
         let resources = PHAssetResource.assetResources(for: asset)
         var selected: [PHAssetResource] = []
 
@@ -166,6 +172,8 @@ final class PhotoService {
             try Task.checkCancellation()
             total += try await resourceFileSize(resource)
         }
+        try Task.checkCancellation()
+        fileSizeCache.setObject(NSNumber(value: total), forKey: cacheKey)
         return total
     }
 

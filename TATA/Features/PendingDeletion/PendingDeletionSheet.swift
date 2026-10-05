@@ -43,7 +43,10 @@ struct PendingDeletionSheet: View {
                 Button {
                     deletePendingAssets()
                 } label: {
-                    Text("Delete")
+                    MediaDeletionLabel(
+                        assets: deletionManager.pendingAssets,
+                        actionName: "Delete"
+                    )
                         .font(.subheadline.weight(.semibold))
                         .padding(.horizontal, 28)
                         .padding(.vertical, 10)

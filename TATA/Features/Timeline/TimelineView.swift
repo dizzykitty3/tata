@@ -247,9 +247,9 @@ struct MediaGridView: View {
                 Button(role: .destructive) {
                     moveSelectionToPendingDeletions()
                 } label: {
-                    Label(
-                        "Move to Pending Deletions (\(selectedAssetIdentifiers.count))",
-                        systemImage: "trash"
+                    MediaDeletionLabel(
+                        assets: selectedAssets,
+                        actionName: "Move to Pending Deletions"
                     )
                     .padding(.horizontal, 18)
                     .frame(height: PendingDeletionLayout.buttonHeight)
@@ -299,6 +299,12 @@ struct MediaGridView: View {
         )
         return assets.filter {
             !pendingIdentifiers.contains($0.localIdentifier)
+        }
+    }
+
+    private var selectedAssets: [PHAsset] {
+        visibleAssets.filter {
+            selectedAssetIdentifiers.contains($0.localIdentifier)
         }
     }
 
