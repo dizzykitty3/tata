@@ -42,7 +42,7 @@ struct IncludedAlbumsPills: View {
                 }
             }
         }
-        .padding(.bottom, albumTitles.isEmpty ? 0 : 6)
+        .padding(.top, albumTitles.isEmpty ? 0 : 6)
         .task(id: asset.localIdentifier) {
             let albums = PHAssetCollection.fetchAssetCollectionsContaining(
                 asset,
@@ -240,8 +240,8 @@ struct MediaInfoOverlay: View {
         ZStack(alignment: .topLeading) {
             // The album group supplies spacing only when it contains pills.
             VStack(alignment: .leading, spacing: 0) {
-                IncludedAlbumsPills(asset: asset)
                 MediaMetadataPill(asset: asset)
+                IncludedAlbumsPills(asset: asset)
             }
             .id(asset.localIdentifier)
             .transition(.opacity)
