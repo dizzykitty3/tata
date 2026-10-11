@@ -284,8 +284,7 @@ struct ContentView: View {
         case .active:
             guard let backgroundedAt,
                   Date.now.timeIntervalSince(backgroundedAt) >= 5 * 60,
-                  deletionManager.pendingAssets.isEmpty,
-                  selectedTab != .settings else {
+                  deletionManager.pendingAssets.isEmpty else {
                 return
             }
 
