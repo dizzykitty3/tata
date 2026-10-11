@@ -13,6 +13,9 @@ struct SwipeView: View {
     @ObservedObject
     var model: SwipeViewModel
 
+    @AppStorage("autoplayLivePhotos")
+    private var autoplayLivePhotos = true
+
     @State private var offset: CGSize = .zero
     @State private var dragAxis: DragAxis?
 
@@ -73,7 +76,8 @@ struct SwipeView: View {
                         MediaView(
                             asset: current,
                             showsPlaybackButton: true,
-                            playsAnimatedImages: true
+                            playsAnimatedImages: true,
+                            autoplaysLivePhoto: autoplayLivePhotos
                         )
                         .id(current.localIdentifier)
                         .background {

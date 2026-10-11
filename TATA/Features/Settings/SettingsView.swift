@@ -12,21 +12,26 @@ struct SettingsView: View {
     @AppStorage(MediaPlaybackMuteController.defaultMuteKey)
     private var muteMediaByDefault = false
 
+    @AppStorage("autoplayLivePhotos")
+    private var autoplayLivePhotos = true
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
+                    Toggle("Autoplay Live Photos", isOn: $autoplayLivePhotos)
+
+                    Toggle(
+                        "Mute by default",
+                        isOn: $muteMediaByDefault
+                    )
+
                     Picker("Timeline span", selection: $timelineGrouping) {
                         ForEach(TimelineGrouping.allCases) { grouping in
                             Text(grouping.title).tag(grouping.rawValue)
                         }
                     }
                     .pickerStyle(.navigationLink)
-
-                    Toggle(
-                        "Mute by default",
-                        isOn: $muteMediaByDefault
-                    )
                 }
 
                 Section {

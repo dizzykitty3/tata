@@ -5,6 +5,7 @@ struct MediaView: View {
     let asset: PHAsset
     var showsPlaybackButton = false
     var playsAnimatedImages = false
+    var autoplaysLivePhoto = false
     var targetSize: CGSize = PHImageManagerMaximumSize
     var contentMode: ContentMode = .fit
     var deletionManager: DeletionManager?
@@ -15,6 +16,7 @@ struct MediaView: View {
             LivePhotoView(
                 asset: asset,
                 showsPlaybackButton: showsPlaybackButton,
+                autoplaysOnce: autoplaysLivePhoto,
                 targetSize: targetSize,
                 contentMode: contentMode,
                 deletionManager: deletionManager,
@@ -44,12 +46,17 @@ struct MediaView: View {
 struct LivePhotoView: View {
     let asset: PHAsset
     let showsPlaybackButton: Bool
+    let autoplaysOnce: Bool
     let targetSize: CGSize
     let contentMode: ContentMode
     let deletionManager: DeletionManager?
     let deletionSource: DeletionManager.Source?
 
     @State private var isShowingPlayer = false
+    @State private var isVisible = false
+    @State private var hasAutoplayed = false
+    @Environment(\.scenePhase) private var scenePhase
+    @ObservedObject private var muteController = MediaPlaybackMuteController.shared
 
     var body: some View {
         ZStack {
@@ -59,12 +66,26 @@ struct LivePhotoView: View {
                 contentMode: contentMode
             )
 
-            if showsPlaybackButton {
+            if autoplaysOnce {
+                InlineLivePhotoPlayer(
+                    asset: asset,
+                    isActive: isVisible && scenePhase == .active && !isShowingPlayer,
+                    hasPlayed: hasAutoplayed,
+                    hasManualVolumeOverride: muteController.hasManualVolumeOverride,
+                    contentMode: contentMode,
+                    onStart: { hasAutoplayed = true }
+                )
+                .allowsHitTesting(false)
+            }
+
+            if showsPlaybackButton && !autoplaysOnce {
                 MediaPlayButton(title: "LivePhoto") {
                     isShowingPlayer = true
                 }
             }
         }
+        .onAppear { isVisible = true }
+        .onDisappear { isVisible = false }
         .sheet(isPresented: $isShowingPlayer) {
             NavigationStack {
                 LivePhotoPlayerSheet(
