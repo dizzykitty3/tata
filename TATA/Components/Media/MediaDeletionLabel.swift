@@ -14,14 +14,10 @@ struct MediaDeletionLabel: View {
     }
 
     private var sizeText: String {
-        if assets.isEmpty { return "0MB" }
+        if assets.isEmpty { return MediaFileFormatting.size(0) }
         guard completedIdentifiers == identifiers else { return "…" }
         guard let totalSize else { return "—" }
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .file
-        formatter.allowedUnits = [.useMB, .useGB]
-        return formatter.string(fromByteCount: totalSize)
-            .filter { !$0.isWhitespace }
+        return MediaFileFormatting.size(totalSize)
     }
 
     var body: some View {

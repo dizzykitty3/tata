@@ -288,6 +288,7 @@ private struct MediaMetadataPill: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var fileSize: Int64?
+    @State private var fileFormat: String?
     @State private var isLoadingSize = true
 
     var body: some View {
@@ -307,9 +308,15 @@ private struct MediaMetadataPill: View {
             )
             .task(id: asset.localIdentifier) {
                 fileSize = nil
+                fileFormat = nil
                 isLoadingSize = true
                 defer { isLoadingSize = false }
                 do {
+                    let format = await Task.detached(priority: .userInitiated) {
+                        MediaFileFormatting.format(for: asset)
+                    }.value
+                    try Task.checkCancellation()
+                    fileFormat = format
                     let size = try await PhotoService.shared.mediaFileSize(asset: asset)
                     try Task.checkCancellation()
                     fileSize = size
@@ -320,8 +327,11 @@ private struct MediaMetadataPill: View {
     }
 
     private var metadataText: String {
-        let size = fileSize.map(Self.formatSize) ?? (isLoadingSize ? "…" : "—")
-        return asset.mediaType == .video ? "\(size) \(formattedDuration)" : size
+        let size = fileSize.map(MediaFileFormatting.size) ?? (isLoadingSize ? "…" : "—")
+        var components = [size]
+        if let fileFormat { components.append(fileFormat) }
+        if asset.mediaType == .video { components.append(formattedDuration) }
+        return components.joined(separator: " ")
     }
 
     private var formattedDuration: String {
@@ -333,14 +343,4 @@ private struct MediaMetadataPill: View {
         return String(format: "%02d:%02d", seconds / 60, seconds % 60)
     }
 
-    nonisolated private static func formatSize(_ bytes: Int64) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .file
-        formatter.allowedUnits = [.useMB, .useGB]
-        formatter.includesUnit = true
-        formatter.includesCount = true
-        formatter.isAdaptive = true
-        return formatter.string(fromByteCount: bytes)
-            .filter { !$0.isWhitespace }
-    }
 }
