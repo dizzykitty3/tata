@@ -174,8 +174,9 @@ struct MediaPhotoPreviewSheet: View {
 
     var body: some View {
         ZStack {
-            ImageView(
+            MediaView(
                 asset: asset,
+                playsAnimatedImages: true,
                 targetSize: PHImageManagerMaximumSize,
                 contentMode: .fit
             )

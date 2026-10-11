@@ -72,7 +72,8 @@ struct SwipeView: View {
                     if let current = model.current {
                         MediaView(
                             asset: current,
-                            showsPlaybackButton: true
+                            showsPlaybackButton: true,
+                            playsAnimatedImages: true
                         )
                         .id(current.localIdentifier)
                         .background {

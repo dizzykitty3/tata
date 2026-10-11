@@ -4,6 +4,7 @@ import Photos
 struct MediaView: View {
     let asset: PHAsset
     var showsPlaybackButton = false
+    var playsAnimatedImages = false
     var targetSize: CGSize = PHImageManagerMaximumSize
     var contentMode: ContentMode = .fit
     var deletionManager: DeletionManager?
@@ -28,6 +29,8 @@ struct MediaView: View {
                 deletionManager: deletionManager,
                 deletionSource: deletionSource
             )
+        } else if playsAnimatedImages, asset.isGIF {
+            AnimatedImageView(asset: asset, targetSize: targetSize, contentMode: contentMode)
         } else {
             ImageView(
                 asset: asset,

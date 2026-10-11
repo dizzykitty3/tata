@@ -140,7 +140,7 @@ struct CategoriesView: View {
                 }
             ),
             MediaTypeCategory(
-                title: "Static Photos",
+                title: "Other Media",
                 assets: model.assets.filter {
                     $0.mediaType == .image
                         && !$0.mediaSubtypes.contains(.photoLive)
