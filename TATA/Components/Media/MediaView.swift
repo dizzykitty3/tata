@@ -6,6 +6,7 @@ struct MediaView: View {
     var showsPlaybackButton = false
     var playsAnimatedImages = false
     var autoplaysLivePhoto = false
+    var autoplaysVideo = false
     var targetSize: CGSize = PHImageManagerMaximumSize
     var contentMode: ContentMode = .fit
     var deletionManager: DeletionManager?
@@ -26,6 +27,7 @@ struct MediaView: View {
             VideoThumbnailView(
                 asset: asset,
                 showsPlaybackButton: showsPlaybackButton,
+                autoplaysOnce: autoplaysVideo,
                 targetSize: targetSize,
                 contentMode: contentMode,
                 deletionManager: deletionManager,

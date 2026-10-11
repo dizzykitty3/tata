@@ -15,11 +15,16 @@ struct SettingsView: View {
     @AppStorage("autoplayLivePhotos")
     private var autoplayLivePhotos = true
 
+    @AppStorage("autoplayVideos")
+    private var autoplayVideos = false
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
                     Toggle("Autoplay Live Photos", isOn: $autoplayLivePhotos)
+
+                    Toggle("Autoplay Videos", isOn: $autoplayVideos)
 
                     Toggle(
                         "Mute by default",
