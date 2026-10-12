@@ -151,18 +151,18 @@ struct UserGuideSheet: View {
 
                     VStack(alignment: .leading, spacing: 24) {
                         GuideStep(
-                            systemImage: "hand.draw",
-                            text: "In the Swipe tab, swipe up to mark media for deletion. Swipe left or right to move to the next or previous item."
+                            systemImage: "arrow.up",
+                            text: "Swipe up to delete."
+                        )
+
+                        GuideStep(
+                            systemImage: "arrow.left.arrow.right",
+                            text: "Swipe left or right to browse."
                         )
 
                         GuideStep(
                             systemImage: "arrow.uturn.backward",
-                            text: "After marking media, you can undo your most recent action or review everything in Pending Deletions."
-                        )
-
-                        GuideStep(
-                            systemImage: "square.grid.2x2",
-                            text: "In the Timeline and Categories tabs, you can mark multiple items for deletion by date, album, or media type."
+                            text: "Undo to cancel your last action."
                         )
                     }
                 }

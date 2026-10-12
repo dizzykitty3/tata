@@ -62,6 +62,10 @@ struct IncludedAlbumsPills: View {
     }
 }
 
+enum MediaActionBarLayout {
+    static let height: CGFloat = 44
+}
+
 struct MediaShareButton: View {
     let asset: PHAsset
 
@@ -75,14 +79,14 @@ struct MediaShareButton: View {
             Image(systemName: "square.and.arrow.up")
                 .font(.title3)
                 .frame(
-                    width: PendingDeletionLayout.buttonHeight,
-                    height: PendingDeletionLayout.buttonHeight,
+                    width: MediaActionBarLayout.height,
+                    height: MediaActionBarLayout.height,
                     alignment: .center
                 )
+                .contentShape(Rectangle())
         }
-        .buttonStyle(.glassProminent)
-        .buttonBorderShape(.circle)
-        .tint(.blue)
+        .buttonStyle(.plain)
+        .foregroundStyle(.primary)
         .disabled(isPreparingShare)
         .accessibilityLabel("Share Media")
         .sheet(item: $sharedMedia) { media in
@@ -119,14 +123,14 @@ struct MediaPendingDeletionButton: View {
             Image(systemName: "trash")
                 .font(.title3)
                 .frame(
-                    width: PendingDeletionLayout.buttonHeight,
-                    height: PendingDeletionLayout.buttonHeight,
+                    width: MediaActionBarLayout.height,
+                    height: MediaActionBarLayout.height,
                     alignment: .center
                 )
+                .contentShape(Rectangle())
         }
-        .buttonStyle(.glassProminent)
-        .buttonBorderShape(.circle)
-        .tint(.red)
+        .buttonStyle(.plain)
+        .foregroundStyle(.primary)
         .accessibilityLabel("Move to Pending Deletions")
     }
 }
@@ -138,20 +142,20 @@ struct MediaDetailActionBar: View {
     let dismiss: () -> Void
 
     var body: some View {
-        GlassEffectContainer(spacing: 8) {
-            HStack(spacing: 8) {
-                MediaShareButton(asset: asset)
+        HStack(spacing: 0) {
+            MediaShareButton(asset: asset)
 
-                if let deletionManager, let deletionSource {
-                    MediaPendingDeletionButton(
-                        asset: asset,
-                        deletionManager: deletionManager,
-                        source: deletionSource,
-                        dismiss: dismiss
-                    )
-                }
+            if let deletionManager, let deletionSource {
+                MediaPendingDeletionButton(
+                    asset: asset,
+                    deletionManager: deletionManager,
+                    source: deletionSource,
+                    dismiss: dismiss
+                )
             }
         }
+        .padding(.horizontal, 6)
+        .glassEffect(.regular.interactive(), in: .capsule)
     }
 }
 

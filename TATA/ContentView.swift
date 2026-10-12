@@ -162,14 +162,11 @@ struct ContentView: View {
 
     @ViewBuilder
     private var swipeActions: some View {
-    if swipeModel.current != nil || !deletionManager.pendingAssets.isEmpty {
-        GlassEffectContainer(spacing: 8) {
-            HStack(spacing: 8) {
-                if swipeModel.current != nil {
-                    if let asset = swipeModel.current {
-                            MediaShareButton(asset: asset)
-                                .accessibilityLabel("Share Current Media")
-                    }
+        if swipeModel.current != nil || !deletionManager.pendingAssets.isEmpty {
+            HStack(spacing: 0) {
+                if let asset = swipeModel.current {
+                    MediaShareButton(asset: asset)
+                        .accessibilityLabel("Share Current Media")
                 }
                 if !deletionManager.pendingAssets.isEmpty {
                     if deletionManager.hasPendingAssets(from: .swipe) {
@@ -179,37 +176,32 @@ struct ContentView: View {
                             Image(systemName: "arrow.uturn.backward")
                                 .font(.title3)
                                 .frame(
-                                    width: PendingDeletionLayout.buttonHeight,
-                                    height: PendingDeletionLayout.buttonHeight,
-                                    alignment: .center
+                                    width: MediaActionBarLayout.height,
+                                    height: MediaActionBarLayout.height
                                 )
+                                .contentShape(Rectangle())
                         }
-                        .buttonStyle(.glass)
-                        .buttonBorderShape(.circle)
                         .accessibilityLabel("Undo Last Deletion")
                     }
                     Button {
-                            isShowingPendingDeletions = true
+                        isShowingPendingDeletions = true
                     } label: {
-                            Text(
-                                "Pending Deletions (\(deletionManager.pendingAssets.count))"
-                            )
+                        Text("Pending Deletions (\(deletionManager.pendingAssets.count))")
                             .font(.subheadline.weight(.semibold))
                             .padding(.horizontal, 14)
-                            .frame(
-                                height: PendingDeletionLayout.buttonHeight
-                            )
+                            .frame(height: MediaActionBarLayout.height)
+                            .contentShape(Rectangle())
                     }
-                        .buttonStyle(.glass)
-                        .buttonBorderShape(.capsule)
-                        .accessibilityLabel("Pending Deletions")
+                    .accessibilityLabel("Pending Deletions")
                 }
             }
-                .frame(height: PendingDeletionLayout.buttonHeight)
+            .buttonStyle(.plain)
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 6)
+            .glassEffect(.regular.interactive(), in: .capsule)
+            .padding(.bottom, 16)
         }
-                .padding(.bottom, 16)
     }
-}
 
     @ViewBuilder
     private func mediaTabContent<Content: View>(
@@ -270,7 +262,7 @@ struct ContentView: View {
     private var refreshSuggestionBottomInset: CGFloat {
         if selectedTab == .swipe, swipeModel.current != nil {
             return PendingDeletionLayout.buttonBottomInset
-                + PendingDeletionLayout.buttonHeight + 20
+                + MediaActionBarLayout.height + 20
         }
 
         return PendingDeletionLayout.buttonBottomInset
