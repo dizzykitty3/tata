@@ -8,7 +8,7 @@ struct SwipeView: View {
     }
 
     private let swipeThreshold: CGFloat = 100
-    private let transitionDuration: Double = 0.18
+    private let transitionDuration: Double = 0.28
 
     @ObservedObject
     var model: SwipeViewModel
@@ -22,20 +22,26 @@ struct SwipeView: View {
     @State private var offset: CGSize = .zero
     @State private var dragAxis: DragAxis?
 
-    private var transitionProgress: Double {
-        guard let dragAxis else {
-            return 0
-        }
+    @State private var isTransitioning = false
+    @State private var settlingDirection: CGSize = .zero
 
-        let distance: CGFloat
-        switch dragAxis {
-        case .horizontal:
-            distance = abs(offset.width)
-        case .vertical:
-            distance = abs(offset.height)
-         }
+    private var direction: CGSize { isTransitioning ? settlingDirection : offset }
 
-        return min(max(Double(distance / 500), 0), 1)
+    private var isReversing: Bool {
+        dragAxis == .horizontal && direction.width > 0 && model.previous != nil
+    }
+
+    private var isAdvancing: Bool {
+        model.current != nil && (
+            (dragAxis == .horizontal && direction.width < 0)
+                || (dragAxis == .vertical && direction.height < 0)
+        )
+    }
+
+    private func progress(in size: CGSize) -> CGFloat {
+        let distance = dragAxis == .vertical ? -offset.height : abs(offset.width)
+        let extent = dragAxis == .vertical ? size.height : size.width
+        return min(max(distance / max(extent, 1), 0), 1)
     }
 
     init(model: SwipeViewModel) {
@@ -45,81 +51,62 @@ struct SwipeView: View {
     var body: some View {
         GeometryReader { safeAreaProxy in
             GeometryReader { proxy in
+                let progress = progress(in: proxy.size)
+                let shrinksCurrent = isReversing || (isAdvancing && dragAxis == .vertical)
                 ZStack {
                     Color(uiColor: .systemBackground)
 
-                    if let previous = model.previous {
-                        MediaView(
-                            asset: previous,
-                            showsPlaybackButton: false
-                        )
-                        .id(previous.localIdentifier)
-                        .opacity(
-                            dragAxis == .horizontal && offset.width > 0
-                                ? transitionProgress
-                                : 0
-                        )
-                    }
-
                     if let next = model.next {
-                        MediaView(
-                            asset: next,
-                            showsPlaybackButton: false
-                        )
-                        .id(next.localIdentifier)
-                        .opacity(
-                            dragAxis == .vertical
-                                || (dragAxis == .horizontal && offset.width < 0)
-                                ? transitionProgress
-                                : 0
-                        )
+                        MediaView(asset: next, showsPlaybackButton: false)
+                            .id(next.localIdentifier)
+                            .frame(width: proxy.size.width, height: proxy.size.height)
+                            .scaleEffect(0.8 + 0.2 * progress, anchor: .center)
+                            .opacity(isAdvancing ? Double(progress) : 0)
+                            .allowsHitTesting(false)
                     }
 
-                    if let current = model.current {
-                        MediaView(
-                            asset: current,
-                            showsPlaybackButton: true,
-                            playsAnimatedImages: true,
-                            autoplaysLivePhoto: autoplayLivePhotos,
-                            autoplaysVideo: autoplayVideos
-                        )
-                        .id(current.localIdentifier)
-                        .background {
-                            Color(uiColor: .systemBackground)
-                                .opacity(offset == .zero ? 1 : 0)
-                        }
-                        .offset(offset)
-                        .opacity(1 - transitionProgress)
-                    } else {
-                        ContentUnavailableView(
-                            "No Media",
-                            systemImage: "photo.on.rectangle.angled",
-                            description: Text(
-                                model.previous == nil
-                                    ? "Your photo library doesn't contain any media."
-                                    : "You've reached the end of your media."
+                    Group {
+                        if let current = model.current {
+                            MediaView(
+                                asset: current,
+                                showsPlaybackButton: true,
+                                playsAnimatedImages: true,
+                                autoplaysLivePhoto: autoplayLivePhotos,
+                                autoplaysVideo: autoplayVideos
                             )
-                        )
-                        .offset(
-                            model.previous == nil ? .zero : offset
-                        )
-                        .opacity(
-                            model.previous == nil
-                                ? 1
-                                : 1 - transitionProgress
-                        )
+                            .id(current.localIdentifier)
+                        } else {
+                            ContentUnavailableView(
+                                "No Media",
+                                systemImage: "photo.on.rectangle.angled",
+                                description: Text(
+                                    model.previous == nil
+                                        ? "Your photo library doesn't contain any media."
+                                        : "You've reached the end of your media."
+                                )
+                            )
+                        }
+                    }
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .scaleEffect(shrinksCurrent ? 1 - 0.2 * progress : 1, anchor: .center)
+                    .opacity(isReversing ? Double(1 - progress) : 1)
+                    .offset(isAdvancing ? offset : .zero)
+                    .zIndex(1)
+
+                    if let previous = model.previous {
+                        MediaView(asset: previous, showsPlaybackButton: false)
+                            .id(previous.localIdentifier)
+                            .frame(width: proxy.size.width, height: proxy.size.height)
+                            .offset(x: -proxy.size.width * (1 - progress))
+                            .opacity(isReversing ? 1 : 0)
+                            .allowsHitTesting(false)
+                            .zIndex(2)
                     }
                 }
-                .frame(
-                    width: proxy.size.width,
-                    height: proxy.size.height
-                )
-                .position(
-                    x: proxy.size.width / 2,
-                    y: proxy.size.height / 2
-                )
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .clipped()
                 .contentShape(Rectangle())
-                .gesture(dragGesture)
+                .gesture(dragGesture(in: proxy.size))
             }
             .ignoresSafeArea(.container, edges: .vertical)
             .overlay(alignment: .topLeading) {
@@ -132,114 +119,65 @@ struct SwipeView: View {
         }
     }
 
-    private var dragGesture: some Gesture {
+    private func dragGesture(in size: CGSize) -> some Gesture {
         DragGesture()
             .onChanged { value in
+                guard !isTransitioning else { return }
                 if dragAxis == nil {
-                    let horizontalDistance = abs(value.translation.width)
-                    let verticalDistance = abs(value.translation.height)
-
-                    if max(horizontalDistance, verticalDistance) > 8 {
-                        dragAxis = horizontalDistance >= verticalDistance
-                            ? .horizontal
-                            : .vertical
-                    }
+                    let x = abs(value.translation.width)
+                    let y = abs(value.translation.height)
+                    guard max(x, y) > 8 else { return }
+                    dragAxis = x >= y ? .horizontal : .vertical
                 }
-
-                if let dragAxis {
-                    switch dragAxis {
-                    case .horizontal:
-                        offset = CGSize(
-                            width: value.translation.width,
-                            height: 0
-                        )
-                    case .vertical:
-                        offset = CGSize(
-                            width: 0,
-                            height: value.translation.height
-                        )
+                switch dragAxis {
+                case .horizontal:
+                    let x = value.translation.width
+                    guard (x > 0 && model.previous != nil) || (x < 0 && model.current != nil) else {
+                        offset = .zero
+                        return
                     }
-                } else {
-                    offset = value.translation
+                    offset = CGSize(width: min(max(x, -size.width), size.width), height: 0)
+                case .vertical:
+                    // Downward drags have no assigned action or media transform.
+                    offset = model.current == nil ? .zero : CGSize(
+                        width: 0,
+                        height: max(min(value.translation.height, 0), -size.height)
+                    )
+                case nil:
+                    break
                 }
             }
             .onEnded { value in
-                let x = value.translation.width
-                let y = value.translation.height
-
-                guard let dragAxis else {
-                    resetDrag()
-                    return
-                }
-
-                if dragAxis == .vertical, y < -swipeThreshold {
-                    delete()
-                } else if dragAxis == .horizontal, x < -swipeThreshold {
-                    next()
-                } else if dragAxis == .horizontal, x > swipeThreshold {
-                    previous()
+                guard !isTransitioning else { return }
+                if dragAxis == .vertical, value.translation.height < -swipeThreshold, model.current != nil {
+                    complete(to: CGSize(width: 0, height: -size.height), action: model.markCurrentForDeletion)
+                } else if dragAxis == .horizontal, value.translation.width < -swipeThreshold, model.current != nil {
+                    complete(to: CGSize(width: -size.width, height: 0), action: model.moveNext)
+                } else if dragAxis == .horizontal, value.translation.width > swipeThreshold, model.previous != nil {
+                    complete(to: CGSize(width: size.width, height: 0), action: model.movePrevious)
                 } else {
-                    resetDrag()
+                    complete(to: .zero, action: {})
                 }
             }
     }
 
-    private func resetDrag() {
-        withAnimation {
-            offset = .zero
-        }
-        dragAxis = nil
-    }
-
-    private func next() {
-        guard model.current != nil else {
-            resetDrag()
-            return
-        }
-
-        withAnimation(.easeOut(duration: transitionDuration)) {
-            offset.width = -500
-        }
-
-        DispatchQueue.main.asyncAfter(
-            deadline: .now() + transitionDuration
+    private func complete(to destination: CGSize, action: @escaping () -> Void) {
+        settlingDirection = offset
+        isTransitioning = true
+        withAnimation(
+            .timingCurve(0.22, 1, 0.36, 1, duration: transitionDuration),
+            completionCriteria: .removed
         ) {
-            model.moveNext()
-            offset = .zero
-            dragAxis = nil
-        }
-    }
-
-    private func previous() {
-        guard model.previous != nil else {
-            resetDrag()
-            return
-        }
-
-        withAnimation(.easeOut(duration: transitionDuration)) {
-            offset.width = 500
-        }
-
-        DispatchQueue.main.asyncAfter(
-            deadline: .now() + transitionDuration
-        ) {
-            model.movePrevious()
-            offset = .zero
-            dragAxis = nil
-        }
-    }
-
-    private func delete() {
-        withAnimation {
-            offset.height = -500
-        }
-
-        DispatchQueue.main.asyncAfter(
-            deadline: .now() + transitionDuration
-        ) {
-            model.markCurrentForDeletion()
-            offset = .zero
-            dragAxis = nil
+            offset = destination
+        } completion: {
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                action()
+                offset = .zero
+                dragAxis = nil
+                isTransitioning = false
+            }
         }
     }
 }
