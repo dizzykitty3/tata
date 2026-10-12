@@ -62,10 +62,6 @@ struct IncludedAlbumsPills: View {
     }
 }
 
-enum MediaActionBarLayout {
-    static let height: CGFloat = 44
-}
-
 struct MediaShareButton: View {
     let asset: PHAsset
 
@@ -79,8 +75,8 @@ struct MediaShareButton: View {
             Image(systemName: "square.and.arrow.up")
                 .font(.title3)
                 .frame(
-                    width: MediaActionBarLayout.height,
-                    height: MediaActionBarLayout.height,
+                    width: ActionButtonLayout.height,
+                    height: ActionButtonLayout.height,
                     alignment: .center
                 )
                 .contentShape(Rectangle())
@@ -123,8 +119,8 @@ struct MediaPendingDeletionButton: View {
             Image(systemName: "trash")
                 .font(.title3)
                 .frame(
-                    width: MediaActionBarLayout.height,
-                    height: MediaActionBarLayout.height,
+                    width: ActionButtonLayout.height,
+                    height: ActionButtonLayout.height,
                     alignment: .center
                 )
                 .contentShape(Rectangle())

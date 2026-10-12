@@ -176,8 +176,8 @@ struct ContentView: View {
                             Image(systemName: "arrow.uturn.backward")
                                 .font(.title3)
                                 .frame(
-                                    width: MediaActionBarLayout.height,
-                                    height: MediaActionBarLayout.height
+                                    width: ActionButtonLayout.height,
+                                    height: ActionButtonLayout.height
                                 )
                                 .contentShape(Rectangle())
                         }
@@ -189,7 +189,7 @@ struct ContentView: View {
                         Text("Pending Deletions (\(deletionManager.pendingAssets.count))")
                             .font(.subheadline.weight(.semibold))
                             .padding(.horizontal, 14)
-                            .frame(height: MediaActionBarLayout.height)
+                            .frame(height: ActionButtonLayout.height)
                             .contentShape(Rectangle())
                     }
                     .accessibilityLabel("Pending Deletions")
@@ -262,7 +262,7 @@ struct ContentView: View {
     private var refreshSuggestionBottomInset: CGFloat {
         if selectedTab == .swipe, swipeModel.current != nil {
             return PendingDeletionLayout.buttonBottomInset
-                + MediaActionBarLayout.height + 20
+                + ActionButtonLayout.height + 20
         }
 
         return PendingDeletionLayout.buttonBottomInset

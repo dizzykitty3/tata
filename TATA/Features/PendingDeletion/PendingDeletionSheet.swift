@@ -3,7 +3,6 @@ import Photos
 
 enum PendingDeletionLayout {
     static let buttonBottomInset: CGFloat = 72
-    static let buttonHeight: CGFloat = 36
     static let gridSpacing: CGFloat = 2
     static let gridTargetSize = CGSize(width: 600, height: 600)
 }
@@ -49,9 +48,10 @@ struct PendingDeletionSheet: View {
                     )
                         .font(.subheadline.weight(.semibold))
                         .padding(.horizontal, 28)
-                        .padding(.vertical, 10)
+                        .frame(height: ActionButtonLayout.height)
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(.plain)
+                .glassEffect(.regular.tint(.red).interactive(), in: .capsule)
                 .buttonBorderShape(.capsule)
                 .tint(.red)
                 .foregroundStyle(.white)

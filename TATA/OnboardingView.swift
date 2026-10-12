@@ -44,7 +44,7 @@ struct OnboardingView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .frame(height: 52)
+            .frame(height: ActionButtonLayout.height)
             .disabled(photoAuthorizationStatus == .restricted)
         }
         .padding(24)
@@ -175,10 +175,12 @@ struct UserGuideSheet: View {
                 } label: {
                     Text("OK")
                         .padding(.horizontal, 28)
-                        .padding(.vertical, 10)
+                        .frame(height: ActionButtonLayout.height)
                 }
                 .font(.body.weight(.semibold))
-                .buttonStyle(.glassProminent)
+                .buttonStyle(.plain)
+                .foregroundStyle(.white)
+                .glassEffect(.regular.tint(.accentColor).interactive(), in: .capsule)
                 .buttonBorderShape(.capsule)
                 .padding(.vertical, 12)
             }

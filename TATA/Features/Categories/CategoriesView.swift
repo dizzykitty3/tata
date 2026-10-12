@@ -72,9 +72,10 @@ struct CategoriesView: View {
                         Text("Pending Deletions (\(deletionManager.pendingAssets.count))")
                             .font(.subheadline.weight(.semibold))
                             .padding(.horizontal, 14)
-                            .frame(height: PendingDeletionLayout.buttonHeight)
+                            .frame(height: ActionButtonLayout.height)
                     }
-                    .buttonStyle(.glass)
+                    .buttonStyle(.plain)
+                    .glassEffect(.regular.interactive(), in: .capsule)
                     .buttonBorderShape(.capsule)
                     .accessibilityLabel("Pending Deletions")
                     .padding(.bottom, 16)

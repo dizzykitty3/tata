@@ -62,9 +62,10 @@ struct TimelineView: View {
                         Text("Pending Deletions (\(deletionManager.pendingAssets.count))")
                         .font(.subheadline.weight(.semibold))
                         .padding(.horizontal, 14)
-                        .frame(height: PendingDeletionLayout.buttonHeight)
+                        .frame(height: ActionButtonLayout.height)
                     }
-                    .buttonStyle(.glass)
+                    .buttonStyle(.plain)
+                    .glassEffect(.regular.interactive(), in: .capsule)
                     .buttonBorderShape(.capsule)
                     .accessibilityLabel("Pending Deletions")
                     .padding(.bottom, 16)
@@ -252,9 +253,10 @@ struct MediaGridView: View {
                         actionName: "Move to Pending Deletions"
                     )
                     .padding(.horizontal, 18)
-                    .frame(height: PendingDeletionLayout.buttonHeight)
+                    .frame(height: ActionButtonLayout.height)
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(.plain)
+                .glassEffect(.regular.tint(.red).interactive(), in: .capsule)
                 .buttonBorderShape(.capsule)
                 .tint(.red)
                 .foregroundStyle(.white)
