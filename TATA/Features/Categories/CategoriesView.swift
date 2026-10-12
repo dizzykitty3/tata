@@ -20,13 +20,18 @@ struct CategoriesView: View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 if model.albums.isEmpty, model.assets.isEmpty {
-                    ContentUnavailableView(
-                        "No Categories",
-                        systemImage: "square.grid.2x2",
-                        description: Text(
-                            "Your photo library doesn't contain media or albums."
+                    if model.isLoading {
+                        ProgressView("Loading Categories…")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        ContentUnavailableView(
+                            "No Categories",
+                            systemImage: "square.grid.2x2",
+                            description: Text(
+                                "Your photo library doesn't contain media or albums."
+                            )
                         )
-                    )
+                    }
                 } else {
                     List {
                         albumSection(
@@ -48,8 +53,7 @@ struct CategoriesView: View {
                                             assets: category.assets,
                                             title: category.title,
                                             deletionManager: deletionManager,
-                                            deletionSource: .category,
-                                            refreshMedia: model.reload
+                                            deletionSource: .category
                                         )
                                     } label: {
                                         CategoryMediaRow(
@@ -84,7 +88,7 @@ struct CategoriesView: View {
             .navigationTitle("Categories")
         }
         .onAppear {
-            model.reload()
+            model.loadIfNeeded()
         }
     }
 
@@ -101,8 +105,7 @@ struct CategoriesView: View {
                             assets: album.assets,
                             title: album.title,
                             deletionManager: deletionManager,
-                            deletionSource: .category,
-                            refreshMedia: model.reload
+                            deletionSource: .category
                         )
                     } label: {
                         CategoryMediaRow(

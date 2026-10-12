@@ -57,7 +57,7 @@ struct SwipeView: View {
                     Color(uiColor: .systemBackground)
 
                     if let next = model.next {
-                        MediaView(asset: next, showsPlaybackButton: false)
+                        MediaView(asset: next, showsPlaybackButton: false, targetSize: PhotoService.browsingImageSize)
                             .id(next.localIdentifier)
                             .frame(width: proxy.size.width, height: proxy.size.height)
                             .scaleEffect(0.8 + 0.2 * progress, anchor: .center)
@@ -72,7 +72,8 @@ struct SwipeView: View {
                                 showsPlaybackButton: true,
                                 playsAnimatedImages: true,
                                 autoplaysLivePhoto: autoplayLivePhotos,
-                                autoplaysVideo: autoplayVideos
+                                autoplaysVideo: autoplayVideos,
+                                targetSize: PhotoService.browsingImageSize
                             )
                             .id(current.localIdentifier)
                         } else {
@@ -94,7 +95,7 @@ struct SwipeView: View {
                     .zIndex(1)
 
                     if let previous = model.previous {
-                        MediaView(asset: previous, showsPlaybackButton: false)
+                        MediaView(asset: previous, showsPlaybackButton: false, targetSize: PhotoService.browsingImageSize)
                             .id(previous.localIdentifier)
                             .frame(width: proxy.size.width, height: proxy.size.height)
                             .offset(x: -proxy.size.width * (1 - progress))

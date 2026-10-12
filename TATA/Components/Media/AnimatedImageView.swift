@@ -35,20 +35,18 @@ struct AnimatedImageView: View {
                         .aspectRatio(contentMode: contentMode)
                 }
             }
-            .onAppear {
-                isVisible = true
-                if scenePhase == .active { playback.start(asset: asset) }
-            }
-            .onChange(of: scenePhase) { _, phase in
-                if phase == .active, isVisible {
-                    playback.start(asset: asset)
-                } else {
-                    playback.stop()
-                }
-            }
-            .onChange(of: asset.localIdentifier) { _, _ in
+            .onAppear { isVisible = true }
+            .task(id: "\(asset.localIdentifier)-\(isVisible && scenePhase == .active)") {
                 playback.stop()
-                if scenePhase == .active, isVisible { playback.start(asset: asset) }
+                guard isVisible, scenePhase == .active else { return }
+                do {
+                    try await Task.sleep(for: .milliseconds(250))
+                    let isAnimated = await Task.detached(priority: .userInitiated) {
+                        asset.isGIF
+                    }.value
+                    try Task.checkCancellation()
+                    if isAnimated { playback.start(asset: asset) }
+                } catch {}
             }
             .onDisappear {
                 isVisible = false

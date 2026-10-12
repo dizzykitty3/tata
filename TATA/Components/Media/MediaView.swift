@@ -33,7 +33,7 @@ struct MediaView: View {
                 deletionManager: deletionManager,
                 deletionSource: deletionSource
             )
-        } else if playsAnimatedImages, asset.isGIF {
+        } else if playsAnimatedImages {
             AnimatedImageView(asset: asset, targetSize: targetSize, contentMode: contentMode)
         } else {
             ImageView(
@@ -57,6 +57,10 @@ struct LivePhotoView: View {
     @State private var isShowingPlayer = false
     @State private var isVisible = false
     @State private var hasAutoplayed = false
+    @State private var autoplayReady = false
+    private var shouldAutoplay: Bool {
+        autoplaysOnce && isVisible && scenePhase == .active && !isShowingPlayer
+    }
     @Environment(\.scenePhase) private var scenePhase
     @ObservedObject private var muteController = MediaPlaybackMuteController.shared
 
@@ -71,7 +75,7 @@ struct LivePhotoView: View {
             if autoplaysOnce {
                 InlineLivePhotoPlayer(
                     asset: asset,
-                    isActive: isVisible && scenePhase == .active && !isShowingPlayer,
+                    isActive: shouldAutoplay && autoplayReady,
                     hasPlayed: hasAutoplayed,
                     hasManualVolumeOverride: muteController.hasManualVolumeOverride,
                     contentMode: contentMode,
@@ -87,7 +91,16 @@ struct LivePhotoView: View {
             }
         }
         .onAppear { isVisible = true }
-        .onDisappear { isVisible = false }
+        .onDisappear { isVisible = false; autoplayReady = false }
+        .task(id: shouldAutoplay) {
+            autoplayReady = false
+            guard shouldAutoplay else { return }
+            do {
+                try await Task.sleep(for: .milliseconds(250))
+                try Task.checkCancellation()
+                autoplayReady = true
+            } catch {}
+        }
         .sheet(isPresented: $isShowingPlayer) {
             NavigationStack {
                 LivePhotoPlayerSheet(

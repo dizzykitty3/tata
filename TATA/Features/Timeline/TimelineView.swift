@@ -35,10 +35,7 @@ struct TimelineView: View {
                                                 assets: period.assets,
                                                 title: periodTitle(for: period),
                                                 deletionManager: deletionManager,
-                                                deletionSource: .date,
-                                                refreshMedia: {
-                                                    model.reload(grouping: grouping)
-                                                }
+                                                deletionSource: .date
                                             )
                                         } label: {
                                             TimelineRow(
@@ -74,7 +71,7 @@ struct TimelineView: View {
             .navigationTitle("Timeline")
         }
         .onAppear {
-            model.reload(grouping: grouping)
+            model.loadIfNeeded(grouping: grouping)
         }
         .onChange(of: timelineGrouping) {
             model.reload(grouping: grouping)
@@ -217,12 +214,10 @@ struct MediaGridView: View {
     let title: String
     @ObservedObject var deletionManager: DeletionManager
     let deletionSource: DeletionManager.Source
-    let refreshMedia: () -> Void
 
     @State private var isSelecting = false
     @State private var selectedAssetIdentifiers = Set<String>()
     @State private var selectedPhoto: DatePhoto?
-    @State private var didChangePendingDeletions = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -285,14 +280,6 @@ struct MediaGridView: View {
                 )
             }
         }
-        .onDisappear {
-            guard didChangePendingDeletions else {
-                return
-            }
-            Task { @MainActor in
-                refreshMedia()
-            }
-        }
     }
 
     private var visibleAssets: [PHAsset] {
@@ -321,14 +308,9 @@ struct MediaGridView: View {
     }
 
     private func moveSelectionToPendingDeletions() {
-        for asset in visibleAssets where selectedAssetIdentifiers.contains(
-            asset.localIdentifier
-        ) {
-            deletionManager.add(asset, source: deletionSource)
-        }
+        deletionManager.add(selectedAssets, source: deletionSource)
         selectedAssetIdentifiers.removeAll()
         isSelecting = false
-        didChangePendingDeletions = true
     }
 
 }

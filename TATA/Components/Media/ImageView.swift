@@ -7,6 +7,8 @@ struct ImageView: View {
     let contentMode: ContentMode
 
     @State private var image: UIImage?
+    @State private var requestID: PHImageRequestID?
+    @State private var generation = UUID()
 
     init(
         asset: PHAsset,
@@ -28,13 +30,23 @@ struct ImageView: View {
                 ProgressView()
             }
         }
-        .task {
-            PhotoService.shared.requestImage(
-                asset: asset,
-                size: targetSize
-            ) {
-                image = $0
+        .task(id: "\(asset.localIdentifier)-\(targetSize)") {
+            cancelRequest()
+            image = nil
+            let token = generation
+            requestID = PhotoService.shared.requestImage(asset: asset, size: targetSize) { result in
+                Task { @MainActor in
+                    guard generation == token else { return }
+                    image = result
+                }
             }
         }
+        .onDisappear { cancelRequest() }
+    }
+
+    private func cancelRequest() {
+        generation = UUID()
+        if let requestID { PhotoService.shared.cancelImageRequest(requestID) }
+        requestID = nil
     }
 }

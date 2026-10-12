@@ -55,9 +55,13 @@ struct VideoThumbnailView: View {
             isVisible = false
             playback.stop()
         }
-        .onChange(of: shouldPlay) { _, active in
-            if active { playback.start(asset: asset) }
-            else { playback.stop() }
+        .task(id: shouldPlay) {
+            guard shouldPlay else { playback.stop(); return }
+            do {
+                try await Task.sleep(for: .milliseconds(250))
+                try Task.checkCancellation()
+                playback.start(asset: asset)
+            } catch {}
         }
         .onChange(of: muteController.hasManualVolumeOverride) { _, overridden in
             if overridden { playback.player?.isMuted = false }

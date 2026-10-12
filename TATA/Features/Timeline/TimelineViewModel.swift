@@ -48,7 +48,14 @@ struct TimelineMediaSection: Identifiable {
 final class TimelineViewModel: ObservableObject {
     @Published private(set) var sections: [TimelineMediaSection] = []
 
+    private var loadedRevision: Int?
+    private var loadedGrouping: TimelineGrouping?
     private let calendar = Calendar.autoupdatingCurrent
+
+    func loadIfNeeded(grouping: TimelineGrouping) {
+        guard loadedRevision != PhotoLibraryRevision.shared.value || loadedGrouping != grouping else { return }
+        reload(grouping: grouping)
+    }
 
     init() {
         reload(grouping: .date)
@@ -62,6 +69,8 @@ final class TimelineViewModel: ObservableObject {
     }
 
     func reload(assets: [PHAsset], grouping: TimelineGrouping) {
+        loadedRevision = PhotoLibraryRevision.shared.value
+        loadedGrouping = grouping
         let datedAssets = assets.compactMap { asset -> (Date, PHAsset)? in
 
             guard let creationDate = asset.creationDate else {

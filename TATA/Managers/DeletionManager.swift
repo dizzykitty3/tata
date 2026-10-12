@@ -27,14 +27,18 @@ final class DeletionManager: ObservableObject {
     }
 
     func add(_ asset: PHAsset, source: Source) {
-        guard !pendingAssets.contains(where: {
-            $0.localIdentifier == asset.localIdentifier
-        }) else {
-            return
-        }
+        add([asset], source: source)
+    }
 
-        pendingAssets.append(asset)
-        sourceByAssetIdentifier[asset.localIdentifier] = source
+    func add(_ assets: [PHAsset], source: Source) {
+        var identifiers = Set(pendingAssets.map(\.localIdentifier))
+        let additions = assets.filter { identifiers.insert($0.localIdentifier).inserted }
+        guard !additions.isEmpty else { return }
+        for asset in additions {
+            sourceByAssetIdentifier[asset.localIdentifier] = source
+        }
+        // Publish once for the entire selection instead of rebuilding UI per item.
+        pendingAssets.append(contentsOf: additions)
     }
 
     @discardableResult

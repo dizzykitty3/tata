@@ -18,7 +18,11 @@ final class PhotoService {
     private let videoCache = NSCache<NSString, AVAsset>()
     private let fileSizeCache = NSCache<NSString, NSNumber>()
 
-    private init() {}
+    static let browsingImageSize = CGSize(width: 1600, height: 1600)
+
+    private init() {
+        imageCache.totalCostLimit = 96 * 1024 * 1024
+    }
 
     func fetchAssets() -> PHFetchResult<PHAsset> {
         let options = PHFetchOptions()
@@ -61,34 +65,39 @@ final class PhotoService {
         }
     }
 
+    @discardableResult
     func requestImage(
         asset: PHAsset,
         size: CGSize,
         completion: @escaping (UIImage?) -> Void
-    ) {
+    ) -> PHImageRequestID? {
         let cacheKey = "\(asset.localIdentifier)-\(size.width)x\(size.height)" as NSString
 
         if let image = imageCache.object(forKey: cacheKey) {
             completion(image)
-            return
+            return nil
         }
 
         let options = PHImageRequestOptions()
         options.deliveryMode = .highQualityFormat
-        options.resizeMode = .none
+        options.resizeMode = .fast
         options.isNetworkAccessAllowed = true
 
-        manager.requestImage(
+        return manager.requestImage(
             for: asset,
             targetSize: size,
             contentMode: .aspectFit,
             options: options
         ) { image, _ in
             if let image {
-                self.imageCache.setObject(image, forKey: cacheKey)
+                self.imageCache.setObject(image, forKey: cacheKey, cost: (image.cgImage?.bytesPerRow ?? 0) * (image.cgImage?.height ?? 0))
             }
             completion(image)
         }
+    }
+
+    func cancelImageRequest(_ requestID: PHImageRequestID) {
+        manager.cancelImageRequest(requestID)
     }
 
     func requestLivePhoto(
@@ -286,29 +295,24 @@ final class PhotoService {
     }
 
     func preload(assets: [PHAsset]) {
-        let targetSize = CGSize(width: 1200, height: 1200)
-
+        let oldIDs = Set(cachedAssets.map(\.localIdentifier))
+        let newIDs = Set(assets.map(\.localIdentifier))
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.resizeMode = .fast
+        options.isNetworkAccessAllowed = false
         manager.stopCachingImages(
-            for: cachedAssets,
-            targetSize: targetSize,
+            for: cachedAssets.filter { !newIDs.contains($0.localIdentifier) },
+            targetSize: Self.browsingImageSize,
             contentMode: .aspectFit,
-            options: nil
+            options: options
         )
         manager.startCachingImages(
-            for: assets,
-            targetSize: targetSize,
+            for: assets.filter { !oldIDs.contains($0.localIdentifier) },
+            targetSize: Self.browsingImageSize,
             contentMode: .aspectFit,
-            options: nil
+            options: options
         )
-
         cachedAssets = assets
-
-        for asset in assets {
-            requestImage(asset: asset, size: targetSize) { _ in }
-
-            if asset.mediaType == .video {
-                requestVideo(asset: asset) { _ in }
-            }
-        }
     }
 }

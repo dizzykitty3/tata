@@ -44,15 +44,14 @@ struct IncludedAlbumsPills: View {
         }
         .padding(.top, albumTitles.isEmpty ? 0 : 6)
         .task(id: asset.localIdentifier) {
-            let albums = PHAssetCollection.fetchAssetCollectionsContaining(
-                asset,
-                with: .album,
-                options: nil
-            )
-
-            albumTitles = (0..<albums.count).compactMap { index in
-                albums.object(at: index).localizedTitle
-            }
+            let titles = await Task.detached(priority: .userInitiated) {
+                let albums = PHAssetCollection.fetchAssetCollectionsContaining(
+                    asset, with: .album, options: nil
+                )
+                return (0..<albums.count).compactMap { albums.object(at: $0).localizedTitle }
+            }.value
+            guard !Task.isCancelled else { return }
+            albumTitles = titles
             showsAllAlbums = false
         }
     }
@@ -305,6 +304,7 @@ private struct MediaMetadataPill: View {
                 isLoadingSize = true
                 defer { isLoadingSize = false }
                 do {
+                    try await Task.sleep(for: .milliseconds(250))
                     let format = await Task.detached(priority: .userInitiated) {
                         MediaFileFormatting.format(for: asset)
                     }.value
