@@ -11,10 +11,8 @@ import Photos
 struct OnboardingView: View {
     @Environment(\.scenePhase) private var scenePhase
 
-    @AppStorage("hasGrantedPhotoAccess")
-    private var hasGrantedPhotoAccess = false
-
-    @State private var photoAuthorizationStatus: PHAuthorizationStatus = .notDetermined
+    @Binding var photoAuthorizationStatus: PHAuthorizationStatus
+    @State private var isRequestingAuthorization = false
 
     var body: some View {
         VStack(spacing: 32) {
@@ -45,7 +43,7 @@ struct OnboardingView: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .frame(height: ActionButtonLayout.height)
-            .disabled(photoAuthorizationStatus == .restricted)
+            .disabled(isRequestingAuthorization || photoAuthorizationStatus == .restricted)
         }
         .padding(24)
         .onAppear {
@@ -85,11 +83,15 @@ struct OnboardingView: View {
     }
 
     private func handlePhotoPermission() {
+        guard !isRequestingAuthorization else { return }
+
         switch photoAuthorizationStatus {
 
         case .notDetermined:
+            isRequestingAuthorization = true
             PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
                 DispatchQueue.main.async {
+                    isRequestingAuthorization = false
                     updateStatus(status)
                 }
             }
@@ -98,7 +100,7 @@ struct OnboardingView: View {
             openSettings()
 
         case .authorized, .limited:
-            hasGrantedPhotoAccess = true
+            updateAuthorizationStatus()
 
         case .restricted:
             break
@@ -115,14 +117,6 @@ struct OnboardingView: View {
 
     private func updateStatus(_ status: PHAuthorizationStatus) {
         photoAuthorizationStatus = status
-
-        switch status {
-        case .authorized, .limited:
-            hasGrantedPhotoAccess = true
-
-        default:
-            break
-        }
     }
 
     private func openSettings() {
@@ -210,5 +204,5 @@ private struct GuideStep: View {
 }
 
 #Preview {
-    OnboardingView()
+    OnboardingView(photoAuthorizationStatus: .constant(.notDetermined))
 }

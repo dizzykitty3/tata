@@ -21,7 +21,7 @@ struct RootView: View {
                 ContentView()
 
             default:
-                OnboardingView()
+                OnboardingView(photoAuthorizationStatus: $photoAuthorizationStatus)
             }
         }
         .onChange(of: scenePhase) { _, newPhase in
