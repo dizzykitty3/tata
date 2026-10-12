@@ -165,6 +165,7 @@ struct ContentView: View {
         if swipeModel.current != nil || !deletionManager.pendingAssets.isEmpty {
             HStack(spacing: 0) {
                 if let asset = swipeModel.current {
+                    MediaFavoriteButton(asset: asset)
                     MediaShareButton(asset: asset)
                         .accessibilityLabel("Share Current Media")
                 }
@@ -175,10 +176,7 @@ struct ContentView: View {
                         } label: {
                             Image(systemName: "arrow.uturn.backward")
                                 .font(.title3)
-                                .frame(
-                                    width: ActionButtonLayout.height,
-                                    height: ActionButtonLayout.height
-                                )
+                                .frame(width: ActionButtonLayout.height, height: ActionButtonLayout.height)
                                 .contentShape(Rectangle())
                         }
                         .accessibilityLabel("Undo Last Deletion")

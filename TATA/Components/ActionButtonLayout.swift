@@ -4,4 +4,3 @@ import CoreGraphics
 enum ActionButtonLayout {
     static let height: CGFloat = 52
 }
-

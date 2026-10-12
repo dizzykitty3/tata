@@ -74,11 +74,7 @@ struct MediaShareButton: View {
         } label: {
             Image(systemName: "square.and.arrow.up")
                 .font(.title3)
-                .frame(
-                    width: ActionButtonLayout.height,
-                    height: ActionButtonLayout.height,
-                    alignment: .center
-                )
+                .frame(width: ActionButtonLayout.height, height: ActionButtonLayout.height)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -118,11 +114,7 @@ struct MediaPendingDeletionButton: View {
         } label: {
             Image(systemName: "trash")
                 .font(.title3)
-                .frame(
-                    width: ActionButtonLayout.height,
-                    height: ActionButtonLayout.height,
-                    alignment: .center
-                )
+                .frame(width: ActionButtonLayout.height, height: ActionButtonLayout.height)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -139,6 +131,7 @@ struct MediaDetailActionBar: View {
 
     var body: some View {
         HStack(spacing: 0) {
+            MediaFavoriteButton(asset: asset)
             MediaShareButton(asset: asset)
 
             if let deletionManager, let deletionSource {
