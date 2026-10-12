@@ -16,7 +16,7 @@ struct SettingsView: View {
     private var autoplayLivePhotos = true
 
     @AppStorage("autoplayVideos")
-    private var autoplayVideos = false
+    private var autoplayVideos = true
 
     var body: some View {
         NavigationStack {

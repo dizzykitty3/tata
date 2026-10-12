@@ -7,7 +7,7 @@ struct SwipeView: View {
         case vertical
     }
 
-    private let swipeThreshold: CGFloat = 100
+    private let swipeThreshold: CGFloat = 80
     private let transitionDuration: Double = 0.28
 
     @ObservedObject
@@ -17,7 +17,7 @@ struct SwipeView: View {
     private var autoplayLivePhotos = true
 
     @AppStorage("autoplayVideos")
-    private var autoplayVideos = false
+    private var autoplayVideos = true
 
     @State private var offset: CGSize = .zero
     @State private var dragAxis: DragAxis?
