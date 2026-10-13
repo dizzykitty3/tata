@@ -7,6 +7,7 @@ struct ImageView: View {
     let contentMode: ContentMode
 
     @State private var image: UIImage?
+    @State private var imageIdentity: String
     @State private var requestID: PHImageRequestID?
     @State private var generation = UUID()
 
@@ -18,11 +19,20 @@ struct ImageView: View {
         self.asset = asset
         self.targetSize = targetSize
         self.contentMode = contentMode
+        _image = State(initialValue: PhotoService.shared.cachedImage(asset: asset, size: targetSize))
+        _imageIdentity = State(initialValue: "\(asset.localIdentifier)-\(targetSize)")
+    }
+
+    private var identity: String { "\(asset.localIdentifier)-\(targetSize)" }
+
+    private var displayedImage: UIImage? {
+        if imageIdentity == identity, let image { return image }
+        return PhotoService.shared.cachedImage(asset: asset, size: targetSize)
     }
 
     var body: some View {
         Group {
-            if let image {
+            if let image = displayedImage {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: contentMode)
@@ -30,14 +40,18 @@ struct ImageView: View {
                 ProgressView()
             }
         }
-        .task(id: "\(asset.localIdentifier)-\(targetSize)") {
+        .task(id: identity) {
             cancelRequest()
-            image = nil
+            if imageIdentity != identity {
+                image = PhotoService.shared.cachedImage(asset: asset, size: targetSize)
+                imageIdentity = identity
+            }
+            guard image == nil else { return }
             let token = generation
             requestID = PhotoService.shared.requestImage(asset: asset, size: targetSize) { result in
                 Task { @MainActor in
                     guard generation == token else { return }
-                    image = result
+                    if let result { image = result }
                 }
             }
         }

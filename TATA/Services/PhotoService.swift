@@ -65,6 +65,11 @@ final class PhotoService {
         }
     }
 
+    func cachedImage(asset: PHAsset, size: CGSize) -> UIImage? {
+        let cacheKey = "\(asset.localIdentifier)-\(size.width)x\(size.height)" as NSString
+        return imageCache.object(forKey: cacheKey)
+    }
+
     @discardableResult
     func requestImage(
         asset: PHAsset,
