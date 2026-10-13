@@ -101,6 +101,7 @@ struct MediaShareButton: View {
 }
 
 struct MediaPendingDeletionButton: View {
+    @StateObject private var confirmation = FavoriteDeletionConfirmation()
     let asset: PHAsset
     let deletionManager: DeletionManager
     let source: DeletionManager.Source
@@ -108,8 +109,10 @@ struct MediaPendingDeletionButton: View {
 
     var body: some View {
         Button {
-            deletionManager.add(asset, source: source)
-            dismiss()
+            confirmation.request(assets: [asset]) {
+                deletionManager.add(asset, source: source)
+                dismiss()
+            }
         } label: {
             Image(systemName: "trash")
                 .font(.title3)
@@ -119,6 +122,7 @@ struct MediaPendingDeletionButton: View {
         .buttonStyle(.plain)
         .foregroundStyle(.primary)
         .accessibilityLabel("Move to Pending Deletions")
+        .favoriteDeletionConfirmation(confirmation)
     }
 }
 

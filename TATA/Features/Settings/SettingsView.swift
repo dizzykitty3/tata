@@ -16,6 +16,9 @@ struct SettingsView: View {
     @AppStorage("autoplayVideos")
     private var autoplayVideos = true
 
+    @AppStorage(FavoriteDeletionConfirmation.settingKey)
+    private var confirmBeforeDeletingFavorites = true
+
     var body: some View {
         NavigationStack {
             Form {
@@ -28,6 +31,8 @@ struct SettingsView: View {
                         "Mute By Default",
                         isOn: $muteMediaByDefault
                     )
+
+                    Toggle("Confirm Before Deleting Favorites", isOn: $confirmBeforeDeletingFavorites)
 
                     Picker("Timeline Span", selection: $timelineGrouping) {
                         ForEach(TimelineGrouping.allCases) { grouping in

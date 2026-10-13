@@ -210,6 +210,7 @@ private struct TimelineMediaCollage: View {
 }
 
 struct MediaGridView: View {
+    @StateObject private var confirmation = FavoriteDeletionConfirmation()
     let assets: [PHAsset]
     let title: String
     @ObservedObject var deletionManager: DeletionManager
@@ -259,6 +260,7 @@ struct MediaGridView: View {
                 .padding(.bottom, 16)
             }
         }
+        .favoriteDeletionConfirmation(confirmation)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -308,9 +310,12 @@ struct MediaGridView: View {
     }
 
     private func moveSelectionToPendingDeletions() {
-        deletionManager.add(selectedAssets, source: deletionSource)
-        selectedAssetIdentifiers.removeAll()
-        isSelecting = false
+        let assets = selectedAssets
+        confirmation.request(assets: assets) {
+            deletionManager.add(assets, source: deletionSource)
+            selectedAssetIdentifiers.removeAll()
+            isSelecting = false
+        }
     }
 
 }

@@ -2,6 +2,7 @@ import SwiftUI
 import Photos
 
 struct SwipeView: View {
+    @StateObject private var confirmation = FavoriteDeletionConfirmation()
     private enum DragAxis {
         case horizontal
         case vertical
@@ -121,6 +122,7 @@ struct SwipeView: View {
                 }
             }
         }
+        .favoriteDeletionConfirmation(confirmation)
     }
 
     private func dragGesture(in size: CGSize) -> some Gesture {
@@ -154,7 +156,18 @@ struct SwipeView: View {
             .onEnded { value in
                 guard !isTransitioning else { return }
                 if dragAxis == .vertical, value.translation.height < -swipeThreshold, model.current != nil {
-                    complete(to: CGSize(width: 0, height: -size.height), action: model.markCurrentForDeletion)
+                    guard let asset = model.current else { return }
+                    confirmation.request(assets: [asset], onRequiresConfirmation: {
+                        withAnimation(.easeOut(duration: transitionDuration)) {
+                            offset = .zero
+                            dragAxis = nil
+                        }
+                    }) {
+                        guard model.current?.localIdentifier == asset.localIdentifier else { return }
+                        dragAxis = .vertical
+                        if offset == .zero { offset = CGSize(width: 0, height: -1) }
+                        complete(to: CGSize(width: 0, height: -size.height), action: model.markCurrentForDeletion)
+                    }
                 } else if dragAxis == .horizontal, value.translation.width < -swipeThreshold, model.current != nil {
                     complete(to: CGSize(width: -size.width, height: 0), action: model.moveNext)
                 } else if dragAxis == .horizontal, value.translation.width > swipeThreshold, model.previous != nil {
