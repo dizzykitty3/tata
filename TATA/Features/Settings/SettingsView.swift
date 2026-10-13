@@ -2,8 +2,6 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var deletionManager: DeletionManager
-    let refreshMediaLibrary: () -> Void
-    let isRefreshing: Bool
     let presentUserGuide: () -> Void
 
     @AppStorage(TimelineGrouping.storageKey)
@@ -17,9 +15,6 @@ struct SettingsView: View {
 
     @AppStorage("autoplayVideos")
     private var autoplayVideos = true
-
-    @AppStorage("automaticallyRefreshMediaLibrary")
-    private var automaticallyRefreshMediaLibrary = false
 
     var body: some View {
         NavigationStack {
@@ -46,20 +41,6 @@ struct SettingsView: View {
                     NavigationLink("Action Button Order") {
                         MediaActionOrderView()
                     }
-                }
-
-                Section {
-                    Toggle(
-                        "Automatically Refresh Media Library",
-                        isOn: $automaticallyRefreshMediaLibrary
-                    )
-
-                    Button("Refresh Media Library", action: refreshMediaLibrary)
-                        .disabled(isRefreshing)
-                } footer: {
-                    Text(
-                        "Check for additions and removals in Photos. This clears your Pending Deletions list."
-                    )
                 }
 
                 Section {
@@ -110,8 +91,6 @@ struct SettingsView: View {
 #Preview {
     SettingsView(
         deletionManager: DeletionManager(),
-        refreshMediaLibrary: {},
-        isRefreshing: false,
         presentUserGuide: {}
     )
 }

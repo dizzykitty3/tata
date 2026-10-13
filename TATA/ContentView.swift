@@ -28,16 +28,13 @@ struct ContentView: View {
     @State private var isShowingPendingDeletions = false
     @State private var selectedTab: AppTab = .swipe
     @State private var isRefreshingMediaLibrary = false
+    @State private var shouldSuggestLatestAfterRefresh = false
     @State private var refreshGeneration = 0
-    @State private var showsRefreshConfirmation = false
     @State private var showsRefreshSuggestion = false
     @State private var backgroundedAt: Date?
 
     @AppStorage(UserGuideSheet.hasCompletedStorageKey)
     private var hasCompletedUserGuide = false
-
-    @AppStorage("automaticallyRefreshMediaLibrary")
-    private var automaticallyRefreshMediaLibrary = false
 
     @State private var isShowingUserGuide = false
 
@@ -94,8 +91,6 @@ struct ContentView: View {
                 Tab("Settings", systemImage: "gearshape", value: .settings) {
                     SettingsView(
                         deletionManager: deletionManager,
-                        refreshMediaLibrary: refreshMediaLibrary,
-                        isRefreshing: isRefreshingMediaLibrary,
                         presentUserGuide: {
                             isShowingUserGuide = true
                         }
@@ -105,39 +100,24 @@ struct ContentView: View {
             .tabViewStyle(.sidebarAdaptable)
             .defaultAdaptableTabBarPlacement(.sidebar)
 
-            if showsRefreshConfirmation {
-                Label("Media Library Refreshed", systemImage: "checkmark")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color(uiColor: .label))
-                    .padding(.horizontal, 16)
-                    .frame(height: 40)
-                    .glassEffect(.regular, in: .capsule)
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                    .accessibilityAddTraits(.isStaticText)
-                    .frame(
-                        maxWidth: .infinity,
-                        maxHeight: .infinity,
-                        alignment: .center
-                    )
-            }
-
             if showsRefreshSuggestion {
                 HStack(spacing: 10) {
                     Label(
-                        "New media may be available",
+                        "Continue from the latest media",
                         systemImage: "photo.badge.plus"
                     )
                     .font(.subheadline.weight(.semibold))
 
-                    Button("Refresh") {
+                    Button("Back to Latest") {
                         dismissRefreshSuggestion()
-                        refreshMediaLibrary()
+                        selectedTab = .swipe
+                        swipeModel.returnToLatest()
                     }
                     .font(.subheadline.weight(.semibold))
                     .buttonStyle(.glass)
                     .buttonBorderShape(.capsule)
                     .controlSize(.small)
-                    .accessibilityHint("Refreshes your media library")
+                    .accessibilityHint("Returns to the newest media in Swipe")
                 }
                 .foregroundStyle(Color(uiColor: .label))
                 .padding(.leading, 16)
@@ -149,6 +129,14 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: showsRefreshSuggestion)
+        .task(id: showsRefreshSuggestion) {
+            guard showsRefreshSuggestion else { return }
+            do {
+                try await Task.sleep(for: .seconds(8))
+                try Task.checkCancellation()
+                dismissRefreshSuggestion()
+            } catch {}
+        }
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhaseChange(newPhase)
         }
@@ -236,16 +224,14 @@ struct ContentView: View {
         }
     }
 
-    private func refreshMediaLibrary() {
+    private func refreshMediaLibrary(suggestLatest: Bool) {
+        shouldSuggestLatestAfterRefresh = shouldSuggestLatestAfterRefresh || suggestLatest
         guard !isRefreshingMediaLibrary else {
             return
         }
 
         isRefreshingMediaLibrary = true
-        showsRefreshConfirmation = false
         dismissRefreshSuggestion()
-        isShowingPendingDeletions = false
-        deletionManager.clearPendingAssets()
 
         DispatchQueue.global(qos: .userInitiated).async {
             let assets = PhotoService.shared.fetchAssetSnapshot()
@@ -261,12 +247,11 @@ struct ContentView: View {
                 refreshGeneration += 1
                 isRefreshingMediaLibrary = false
 
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    showsRefreshConfirmation = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                let suggestLatest = shouldSuggestLatestAfterRefresh
+                shouldSuggestLatestAfterRefresh = false
+                if suggestLatest && swipeModel.canReturnToLatest && scenePhase == .active {
                     withAnimation(.easeInOut(duration: 0.2)) {
-                        showsRefreshConfirmation = false
+                        showsRefreshSuggestion = true
                     }
                 }
             }
@@ -296,24 +281,14 @@ struct ContentView: View {
             backgroundedAt = .now
             dismissRefreshSuggestion()
         case .active:
-            guard let backgroundedAt,
-                  Date.now.timeIntervalSince(backgroundedAt) >= 5 * 60,
-                  deletionManager.pendingAssets.isEmpty else {
+            guard let backgroundedAt else {
                 return
             }
 
             self.backgroundedAt = nil
-            if automaticallyRefreshMediaLibrary {
-                refreshMediaLibrary()
-                return
-            }
-
-            withAnimation(.easeInOut(duration: 0.2)) {
-                showsRefreshSuggestion = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
-                dismissRefreshSuggestion()
-            }
+            refreshMediaLibrary(
+                suggestLatest: Date.now.timeIntervalSince(backgroundedAt) >= 5 * 60
+            )
         case .inactive:
             break
         @unknown default:

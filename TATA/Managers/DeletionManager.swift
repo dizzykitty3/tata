@@ -5,8 +5,9 @@ import Combine
 @MainActor
 final class DeletionManager: ObservableObject {
     static let deletedMediaCountKey = "deletedMediaCount"
+    private static let pendingAssetsKey = "pendingDeletionAssets"
 
-    enum Source {
+    enum Source: String, Codable {
         case swipe
         case date
         case category
@@ -20,10 +21,46 @@ final class DeletionManager: ObservableObject {
 
     private var sourceByAssetIdentifier: [String: Source] = [:]
 
+    private struct PendingEntry: Codable {
+        let identifier: String
+        let source: Source
+    }
+
     init() {
         deletedMediaCount = UserDefaults.standard.integer(
             forKey: Self.deletedMediaCountKey
         )
+        restorePendingAssets()
+    }
+
+    private func restorePendingAssets() {
+        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        guard status == .authorized || status == .limited,
+              let data = UserDefaults.standard.data(forKey: Self.pendingAssetsKey),
+              let entries = try? JSONDecoder().decode([PendingEntry].self, from: data),
+              !entries.isEmpty else { return }
+
+        let result = PHAsset.fetchAssets(withLocalIdentifiers: entries.map(\.identifier), options: nil)
+        var available: [String: PHAsset] = [:]
+        result.enumerateObjects { asset, _, _ in
+            available[asset.localIdentifier] = asset
+        }
+        // Photos fetch results need not follow the saved order.
+        for entry in entries {
+            guard let asset = available.removeValue(forKey: entry.identifier) else { continue }
+            sourceByAssetIdentifier[entry.identifier] = entry.source
+            pendingAssets.append(asset)
+        }
+        savePendingAssets()
+    }
+
+    private func savePendingAssets() {
+        let entries = pendingAssets.compactMap { asset -> PendingEntry? in
+            guard let source = sourceByAssetIdentifier[asset.localIdentifier] else { return nil }
+            return PendingEntry(identifier: asset.localIdentifier, source: source)
+        }
+        guard let data = try? JSONEncoder().encode(entries) else { return }
+        UserDefaults.standard.set(data, forKey: Self.pendingAssetsKey)
     }
 
     func add(_ asset: PHAsset, source: Source) {
@@ -39,6 +76,7 @@ final class DeletionManager: ObservableObject {
         }
         // Publish once for the entire selection instead of rebuilding UI per item.
         pendingAssets.append(contentsOf: additions)
+        savePendingAssets()
     }
 
     @discardableResult
@@ -51,6 +89,7 @@ final class DeletionManager: ObservableObject {
 
         let asset = pendingAssets.remove(at: index)
         sourceByAssetIdentifier[asset.localIdentifier] = nil
+        savePendingAssets()
         return asset
     }
 
@@ -63,6 +102,7 @@ final class DeletionManager: ObservableObject {
     func clearPendingAssets() {
         pendingAssets.removeAll()
         sourceByAssetIdentifier.removeAll()
+        savePendingAssets()
     }
 
     func deleteAll(

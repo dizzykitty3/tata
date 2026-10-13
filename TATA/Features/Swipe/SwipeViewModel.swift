@@ -10,6 +10,30 @@ final class SwipeViewModel: ObservableObject {
 
     private var assets: [PHAsset]
     private var index = 0
+    private struct Position: Codable {
+        let identifier: String
+        let date: Date?
+        let index: Int
+        let atEnd: Bool
+    }
+    private static let positionKey = "swipeBrowsingPosition"
+    private var savedPosition: Position? {
+        guard let data = UserDefaults.standard.data(forKey: Self.positionKey) else { return nil }
+        return try? JSONDecoder().decode(Position.self, from: data)
+    }
+
+    var canReturnToLatest: Bool { !assets.isEmpty && index > 0 }
+
+    func returnToLatest() { load(index: 0) }
+
+    private func savePosition() {
+        guard let anchor = current ?? assets.last else { return }
+        let position = Position(identifier: anchor.localIdentifier, date: anchor.creationDate,
+                                index: index, atEnd: current == nil)
+        if let data = try? JSONEncoder().encode(position) {
+            UserDefaults.standard.set(data, forKey: Self.positionKey)
+        }
+    }
 
     @Published
     var current: PHAsset?
@@ -34,13 +58,28 @@ final class SwipeViewModel: ObservableObject {
         self.assets = assets.filter {
             !pendingIdentifiers.contains($0.localIdentifier)
         }
-        load(index: 0)
+        guard !self.assets.isEmpty, let position = savedPosition else {
+            load(index: 0)
+            return
+        }
+        if position.atEnd {
+            load(index: self.assets.count)
+        } else if let restored = self.assets.firstIndex(where: { $0.localIdentifier == position.identifier }) {
+            load(index: restored)
+        } else if let date = position.date,
+                  let nearby = self.assets.firstIndex(where: { ($0.creationDate ?? .distantFuture) <= date }) {
+            load(index: nearby)
+        } else {
+            load(index: min(position.index, self.assets.count - 1))
+        }
     }
 
     func load(index: Int) {
         guard index >= 0 else {
             return
         }
+
+        defer { savePosition() }
 
         if index >= assets.count {
             self.index = index
