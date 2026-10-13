@@ -145,6 +145,10 @@ final class SwipeViewModel: ObservableObject {
             return
         }
 
+        let previousIdentifier = assets[index - 1].localIdentifier
+        if keptIdentifiers.remove(previousIdentifier) != nil {
+            saveKeptIdentifiers()
+        }
         load(index: index - 1)
     }
 
