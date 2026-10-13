@@ -100,7 +100,7 @@ struct ContentView: View {
             .tabViewStyle(.sidebarAdaptable)
             .defaultAdaptableTabBarPlacement(.sidebar)
 
-            if showsRefreshSuggestion {
+            if showsRefreshSuggestion && selectedTab == .swipe {
                 HStack(spacing: 10) {
                     Label(
                         "Continue from the latest media",
