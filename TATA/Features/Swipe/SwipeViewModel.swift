@@ -7,6 +7,16 @@ final class SwipeViewModel: ObservableObject {
     private let service = PhotoService.shared
     private let deletionManager: DeletionManager
     private let preloadCount = 5
+    static let rememberKeptMediaKey = "rememberKeptMedia"
+    private static let keptIdentifiersKey = "keptMediaIdentifiers"
+    private var keptIdentifiers = Set(UserDefaults.standard.stringArray(forKey: keptIdentifiersKey) ?? [])
+    private var remembersKeptMedia: Bool {
+        UserDefaults.standard.bool(forKey: Self.rememberKeptMediaKey)
+    }
+
+    private func saveKeptIdentifiers() {
+        UserDefaults.standard.set(Array(keptIdentifiers), forKey: Self.keptIdentifiersKey)
+    }
 
     private var assets: [PHAsset]
     private var index = 0
@@ -57,6 +67,7 @@ final class SwipeViewModel: ObservableObject {
         )
         self.assets = assets.filter {
             !pendingIdentifiers.contains($0.localIdentifier)
+                && (!remembersKeptMedia || !keptIdentifiers.contains($0.localIdentifier))
         }
         guard !self.assets.isEmpty, let position = savedPosition else {
             load(index: 0)
@@ -122,6 +133,10 @@ final class SwipeViewModel: ObservableObject {
             return
         }
 
+        if remembersKeptMedia, let current,
+           keptIdentifiers.insert(current.localIdentifier).inserted {
+            saveKeptIdentifiers()
+        }
         load(index: index + 1)
     }
 
@@ -148,6 +163,7 @@ final class SwipeViewModel: ObservableObject {
             fetchResult.object(at: $0)
         }.filter {
             !pendingIdentifiers.contains($0.localIdentifier)
+                && (!remembersKeptMedia || !keptIdentifiers.contains($0.localIdentifier))
         }
 
         if let currentIdentifier,
@@ -165,6 +181,9 @@ final class SwipeViewModel: ObservableObject {
             return
         }
 
+        if keptIdentifiers.remove(current.localIdentifier) != nil {
+            saveKeptIdentifiers()
+        }
         deletionManager.add(current, source: .swipe)
 
         if let deletedIndex = assets.firstIndex(

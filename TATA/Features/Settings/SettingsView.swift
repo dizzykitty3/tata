@@ -19,6 +19,9 @@ struct SettingsView: View {
     @AppStorage(FavoriteDeletionConfirmation.settingKey)
     private var confirmBeforeDeletingFavorites = true
 
+    @AppStorage(SwipeViewModel.rememberKeptMediaKey)
+    private var rememberKeptMedia = false
+
     var body: some View {
         NavigationStack {
             Form {
@@ -40,6 +43,12 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.navigationLink)
+                }
+
+                Section {
+                    Toggle("Remember Kept Media", isOn: $rememberKeptMedia)
+                } footer: {
+                    Text("Remember media you swipe left to keep, so you can focus on unreviewed items next time.")
                 }
 
                 Section {
