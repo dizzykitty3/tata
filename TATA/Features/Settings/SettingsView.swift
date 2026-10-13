@@ -43,6 +43,12 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink("Action Button Order") {
+                        MediaActionOrderView()
+                    }
+                }
+
+                Section {
                     Toggle(
                         "Automatically Refresh Media Library",
                         isOn: $automaticallyRefreshMediaLibrary

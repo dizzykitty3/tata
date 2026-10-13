@@ -123,6 +123,8 @@ struct MediaPendingDeletionButton: View {
 }
 
 struct MediaDetailActionBar: View {
+    @AppStorage(MediaAction.storageKey) private var actionOrder = MediaAction.defaultOrder
+
     let asset: PHAsset
     let deletionManager: DeletionManager?
     let deletionSource: DeletionManager.Source?
@@ -130,16 +132,24 @@ struct MediaDetailActionBar: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            MediaFavoriteButton(asset: asset)
-            MediaShareButton(asset: asset)
-
-            if let deletionManager, let deletionSource {
-                MediaPendingDeletionButton(
-                    asset: asset,
-                    deletionManager: deletionManager,
-                    source: deletionSource,
-                    dismiss: dismiss
-                )
+            ForEach(MediaAction.ordered(actionOrder)) { action in
+                switch action {
+                case .favorite:
+                    MediaFavoriteButton(asset: asset)
+                case .share:
+                    MediaShareButton(asset: asset)
+                case .delete:
+                    if let deletionManager, let deletionSource {
+                        MediaPendingDeletionButton(
+                            asset: asset,
+                            deletionManager: deletionManager,
+                            source: deletionSource,
+                            dismiss: dismiss
+                        )
+                    }
+                default:
+                    EmptyView()
+                }
             }
         }
         .padding(.horizontal, 6)

@@ -21,6 +21,8 @@ struct ContentView: View {
     @StateObject
     private var categoriesModel: CategoriesViewModel
 
+    @AppStorage(MediaAction.storageKey) private var actionOrder = MediaAction.defaultOrder
+
     @StateObject private var playbackControl = MediaPlaybackControl()
 
     @State private var isShowingPendingDeletions = false
@@ -170,36 +172,8 @@ struct ContentView: View {
     private var swipeActions: some View {
         if swipeModel.current != nil || !deletionManager.pendingAssets.isEmpty {
             HStack(spacing: 0) {
-                if let asset = swipeModel.current {
-                    if asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive) {
-                        MediaPlaybackButton(control: playbackControl)
-                    }
-                    MediaFavoriteButton(asset: asset)
-                    MediaShareButton(asset: asset)
-                        .accessibilityLabel("Share Current Media")
-                }
-                if !deletionManager.pendingAssets.isEmpty {
-                    if deletionManager.hasPendingAssets(from: .swipe) {
-                        Button {
-                            swipeModel.undoLastDeletion()
-                        } label: {
-                            Image(systemName: "arrow.uturn.backward")
-                                .font(.title3)
-                                .frame(width: ActionButtonLayout.height, height: ActionButtonLayout.height)
-                                .contentShape(Rectangle())
-                        }
-                        .accessibilityLabel("Undo Last Deletion")
-                    }
-                    Button {
-                        isShowingPendingDeletions = true
-                    } label: {
-                        Text("Pending Deletions (\(deletionManager.pendingAssets.count))")
-                            .font(.subheadline.weight(.semibold))
-                            .padding(.horizontal, 14)
-                            .frame(height: ActionButtonLayout.height)
-                            .contentShape(Rectangle())
-                    }
-                    .accessibilityLabel("Pending Deletions")
+                ForEach(MediaAction.ordered(actionOrder)) { action in
+                    swipeAction(action)
                 }
             }
             .buttonStyle(.plain)
@@ -207,6 +181,47 @@ struct ContentView: View {
             .padding(.horizontal, 6)
             .glassEffect(.regular.interactive(), in: .capsule)
             .padding(.bottom, 16)
+        }
+    }
+
+    @ViewBuilder
+    private func swipeAction(_ action: MediaAction) -> some View {
+        switch action {
+        case .playback:
+            if let asset = swipeModel.current,
+               asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive) {
+                MediaPlaybackButton(control: playbackControl)
+            }
+        case .favorite:
+            if let asset = swipeModel.current { MediaFavoriteButton(asset: asset) }
+        case .share:
+            if let asset = swipeModel.current {
+                MediaShareButton(asset: asset)
+                    .accessibilityLabel("Share Current Media")
+            }
+        case .undo:
+            if deletionManager.hasPendingAssets(from: .swipe) {
+                Button { swipeModel.undoLastDeletion() } label: {
+                    Image(systemName: "arrow.uturn.backward")
+                        .font(.title3)
+                        .frame(width: ActionButtonLayout.height, height: ActionButtonLayout.height)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel("Undo Last Deletion")
+            }
+        case .pendingDeletions:
+            if !deletionManager.pendingAssets.isEmpty {
+                Button { isShowingPendingDeletions = true } label: {
+                    Text("Pending Deletions (\(deletionManager.pendingAssets.count))")
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 14)
+                        .frame(height: ActionButtonLayout.height)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel("Pending Deletions")
+            }
+        case .delete:
+            EmptyView()
         }
     }
 
