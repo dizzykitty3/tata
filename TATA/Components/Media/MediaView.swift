@@ -7,6 +7,7 @@ struct MediaView: View {
     var playsAnimatedImages = false
     var autoplaysLivePhoto = false
     var autoplaysVideo = false
+    var playbackControl: MediaPlaybackControl? = nil
     var targetSize: CGSize = PHImageManagerMaximumSize
     var contentMode: ContentMode = .fit
     var deletionManager: DeletionManager?
@@ -18,6 +19,7 @@ struct MediaView: View {
                 asset: asset,
                 showsPlaybackButton: showsPlaybackButton,
                 autoplaysOnce: autoplaysLivePhoto,
+                playbackControl: playbackControl,
                 targetSize: targetSize,
                 contentMode: contentMode,
                 deletionManager: deletionManager,
@@ -28,6 +30,7 @@ struct MediaView: View {
                 asset: asset,
                 showsPlaybackButton: showsPlaybackButton,
                 autoplaysOnce: autoplaysVideo,
+                playbackControl: playbackControl,
                 targetSize: targetSize,
                 contentMode: contentMode,
                 deletionManager: deletionManager,
@@ -49,6 +52,9 @@ struct LivePhotoView: View {
     let asset: PHAsset
     let showsPlaybackButton: Bool
     let autoplaysOnce: Bool
+    var playbackControl: MediaPlaybackControl? = nil
+    @State private var replayID = 0
+    @State private var manuallyPlaying = false
     let targetSize: CGSize
     let contentMode: ContentMode
     let deletionManager: DeletionManager?
@@ -72,25 +78,35 @@ struct LivePhotoView: View {
                 contentMode: contentMode
             )
 
-            if autoplaysOnce {
+            if autoplaysOnce || manuallyPlaying {
                 InlineLivePhotoPlayer(
                     asset: asset,
-                    isActive: shouldAutoplay && autoplayReady,
+                    isActive: isVisible && scenePhase == .active && !isShowingPlayer && (manuallyPlaying || (shouldAutoplay && autoplayReady)),
                     hasPlayed: hasAutoplayed,
                     hasManualVolumeOverride: muteController.hasManualVolumeOverride,
                     contentMode: contentMode,
                     onStart: { hasAutoplayed = true }
                 )
+                .id(replayID)
                 .allowsHitTesting(false)
             }
 
-            if showsPlaybackButton && !autoplaysOnce {
+            if showsPlaybackButton && !autoplaysOnce && playbackControl == nil {
                 MediaPlayButton(title: "LivePhoto") {
                     isShowingPlayer = true
                 }
             }
         }
-        .onAppear { isVisible = true }
+        .contentShape(Rectangle())
+        .onAppear {
+            isVisible = true
+            playbackControl?.isPlaying = false
+            playbackControl?.action = {
+                hasAutoplayed = false
+                manuallyPlaying = true
+                replayID += 1
+            }
+        }
         .onDisappear { isVisible = false; autoplayReady = false }
         .task(id: shouldAutoplay) {
             autoplayReady = false

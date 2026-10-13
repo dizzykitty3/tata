@@ -1,4 +1,5 @@
 import SwiftUI
+import Photos
 
 struct ContentView: View {
     private enum AppTab: Hashable {
@@ -19,6 +20,8 @@ struct ContentView: View {
 
     @StateObject
     private var categoriesModel: CategoriesViewModel
+
+    @StateObject private var playbackControl = MediaPlaybackControl()
 
     @State private var isShowingPendingDeletions = false
     @State private var selectedTab: AppTab = .swipe
@@ -56,7 +59,7 @@ struct ContentView: View {
             TabView(selection: $selectedTab) {
                 Tab("Swipe", systemImage: "hand.draw", value: .swipe) {
                     mediaTabContent {
-                        SwipeView(model: swipeModel)
+                        SwipeView(model: swipeModel, playbackControl: playbackControl)
                             .id(refreshGeneration)
                     }
                     .overlay(alignment: .bottom) {
@@ -168,6 +171,9 @@ struct ContentView: View {
         if swipeModel.current != nil || !deletionManager.pendingAssets.isEmpty {
             HStack(spacing: 0) {
                 if let asset = swipeModel.current {
+                    if asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive) {
+                        MediaPlaybackButton(control: playbackControl)
+                    }
                     MediaFavoriteButton(asset: asset)
                     MediaShareButton(asset: asset)
                         .accessibilityLabel("Share Current Media")

@@ -5,6 +5,7 @@ struct VideoThumbnailView: View {
     let asset: PHAsset
     let showsPlaybackButton: Bool
     var autoplaysOnce = false
+    var playbackControl: MediaPlaybackControl? = nil
     let targetSize: CGSize
     let contentMode: ContentMode
     let deletionManager: DeletionManager?
@@ -28,29 +29,26 @@ struct VideoThumbnailView: View {
                 contentMode: contentMode
             )
 
-            if autoplaysOnce, let player = playback.player {
+            if let player = playback.player {
                 PlayerLayerView(player: player)
                     .allowsHitTesting(false)
             }
 
-            if showsPlaybackButton && !autoplaysOnce {
+            if showsPlaybackButton && !autoplaysOnce && playbackControl == nil {
                 MediaPlayButton(title: "Video") {
                     isShowingPlayer = true
                 }
             }
         }
         .contentShape(Rectangle())
-        .simultaneousGesture(
-            TapGesture().onEnded {
-                guard showsPlaybackButton && autoplaysOnce else { return }
-                isShowingPlayer = true
-            },
-            including: showsPlaybackButton && autoplaysOnce ? .all : .none
-        )
-        .accessibilityAction(named: Text("Play Video Fullscreen")) {
-            if showsPlaybackButton { isShowingPlayer = true }
+        .onAppear {
+            isVisible = true
+            playbackControl?.isPlaying = playback.isPlaying
+            playbackControl?.action = { playback.toggle(asset: asset) }
         }
-        .onAppear { isVisible = true }
+        .onChange(of: playback.isPlaying) { _, playing in
+            playbackControl?.isPlaying = playing
+        }
         .onDisappear {
             isVisible = false
             playback.stop()

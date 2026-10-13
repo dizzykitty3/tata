@@ -5,6 +5,7 @@ import Photos
 @MainActor
 final class InlineVideoPlayback: ObservableObject {
     @Published private(set) var player: AVPlayer?
+    @Published private(set) var isPlaying = false
     private var requestID: PHImageRequestID?
     private var generation = UUID()
     private var hasStarted = false
@@ -35,16 +36,40 @@ final class InlineVideoPlayback: ObservableObject {
                 ) { [weak self] _ in
                     Task { @MainActor [weak self] in
                         guard let self, self.generation == token else { return }
+                        self.isPlaying = false
                         self.finishMutedPlayback()
                     }
                 }
                 self.player = player
                 player.play()
+                self.isPlaying = true
             }
         }
     }
 
+    func toggle(asset: PHAsset) {
+        if let player {
+            if isPlaying {
+                player.pause()
+                isPlaying = false
+                finishMutedPlayback()
+            } else {
+                if let item = player.currentItem, player.currentTime() >= item.duration {
+                    player.seek(to: .zero)
+                }
+                startedMuted = MediaPlaybackMuteController.shared.beginMutedPlaybackIfNeeded()
+                player.isMuted = startedMuted
+                player.play()
+                isPlaying = true
+            }
+        } else {
+            hasStarted = false
+            start(asset: asset)
+        }
+    }
+
     func stop() {
+        isPlaying = false
         generation = UUID()
         if let requestID { PHImageManager.default().cancelImageRequest(requestID) }
         requestID = nil

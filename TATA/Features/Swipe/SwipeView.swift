@@ -12,6 +12,7 @@ struct SwipeView: View {
 
     @ObservedObject
     var model: SwipeViewModel
+    var playbackControl: MediaPlaybackControl? = nil
 
     @AppStorage("autoplayLivePhotos")
     private var autoplayLivePhotos = true
@@ -44,8 +45,9 @@ struct SwipeView: View {
         return min(max(distance / max(extent, 1), 0), 1)
     }
 
-    init(model: SwipeViewModel) {
+    init(model: SwipeViewModel, playbackControl: MediaPlaybackControl? = nil) {
         self.model = model
+        self.playbackControl = playbackControl
     }
 
     var body: some View {
@@ -73,6 +75,7 @@ struct SwipeView: View {
                                 playsAnimatedImages: true,
                                 autoplaysLivePhoto: autoplayLivePhotos,
                                 autoplaysVideo: autoplayVideos,
+                                playbackControl: playbackControl,
                                 targetSize: PhotoService.browsingImageSize
                             )
                             .id(current.localIdentifier)
