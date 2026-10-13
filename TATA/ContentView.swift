@@ -62,7 +62,11 @@ struct ContentView: View {
                             .id(refreshGeneration)
                     }
                     .overlay(alignment: .bottom) {
-                        swipeActions
+                        VStack(spacing: 20) {
+                            refreshSuggestion
+                            swipeActions
+                        }
+                        .padding(.bottom, 16)
                     }
                 }
 
@@ -100,33 +104,7 @@ struct ContentView: View {
             .tabViewStyle(.sidebarAdaptable)
             .defaultAdaptableTabBarPlacement(.sidebar)
 
-            if showsRefreshSuggestion && selectedTab == .swipe {
-                HStack(spacing: 10) {
-                    Label(
-                        "Continue from the latest media",
-                        systemImage: "photo.badge.plus"
-                    )
-                    .font(.subheadline.weight(.semibold))
 
-                    Button("Back to Latest") {
-                        dismissRefreshSuggestion()
-                        selectedTab = .swipe
-                        swipeModel.returnToLatest()
-                    }
-                    .font(.subheadline.weight(.semibold))
-                    .buttonStyle(.glass)
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.small)
-                    .accessibilityHint("Returns to the newest media in Swipe")
-                }
-                .foregroundStyle(Color(uiColor: .label))
-                .padding(.leading, 16)
-                .padding(.trailing, 8)
-                .frame(height: 40)
-                .glassEffect(.regular, in: .capsule)
-                .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                .padding(.bottom, refreshSuggestionBottomInset)
-            }
         }
         .animation(.easeInOut(duration: 0.2), value: showsRefreshSuggestion)
         .task(id: showsRefreshSuggestion) {
@@ -157,6 +135,36 @@ struct ContentView: View {
     }
 
     @ViewBuilder
+    private var refreshSuggestion: some View {
+        if showsRefreshSuggestion {
+            HStack(spacing: 10) {
+                Label(
+                    "Continue from the latest media",
+                    systemImage: "photo.badge.plus"
+                )
+                .font(.subheadline.weight(.semibold))
+
+                Button("Back to Latest") {
+                    dismissRefreshSuggestion()
+                    selectedTab = .swipe
+                    swipeModel.returnToLatest()
+                }
+                .font(.subheadline.weight(.semibold))
+                .buttonStyle(.glass)
+                .buttonBorderShape(.capsule)
+                .controlSize(.small)
+                .accessibilityHint("Returns to the newest media in Swipe")
+            }
+            .foregroundStyle(Color(uiColor: .label))
+            .padding(.leading, 16)
+            .padding(.trailing, 8)
+            .frame(height: 40)
+            .glassEffect(.regular, in: .capsule)
+            .transition(.opacity.combined(with: .scale(scale: 0.95)))
+        }
+    }
+
+    @ViewBuilder
     private var swipeActions: some View {
         if swipeModel.current != nil || !deletionManager.pendingAssets.isEmpty {
             HStack(spacing: 0) {
@@ -168,7 +176,6 @@ struct ContentView: View {
             .foregroundStyle(.primary)
             .padding(.horizontal, 6)
             .glassEffect(.regular.interactive(), in: .capsule)
-            .padding(.bottom, 16)
         }
     }
 
@@ -264,15 +271,6 @@ struct ContentView: View {
                 forKey: TimelineGrouping.storageKey
             ) ?? TimelineGrouping.date.rawValue
         ) ?? .date
-    }
-
-    private var refreshSuggestionBottomInset: CGFloat {
-        if selectedTab == .swipe, swipeModel.current != nil {
-            return PendingDeletionLayout.buttonBottomInset
-                + ActionButtonLayout.height + 20
-        }
-
-        return PendingDeletionLayout.buttonBottomInset
     }
 
     private func handleScenePhaseChange(_ newPhase: ScenePhase) {
