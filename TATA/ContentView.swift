@@ -31,6 +31,9 @@ struct ContentView: View {
     @AppStorage(UserGuideSheet.hasCompletedStorageKey)
     private var hasCompletedUserGuide = false
 
+    @AppStorage("automaticallyRefreshMediaLibrary")
+    private var automaticallyRefreshMediaLibrary = false
+
     @State private var isShowingUserGuide = false
 
     @Environment(\.scenePhase)
@@ -279,6 +282,11 @@ struct ContentView: View {
             }
 
             self.backgroundedAt = nil
+            if automaticallyRefreshMediaLibrary {
+                refreshMediaLibrary()
+                return
+            }
+
             withAnimation(.easeInOut(duration: 0.2)) {
                 showsRefreshSuggestion = true
             }

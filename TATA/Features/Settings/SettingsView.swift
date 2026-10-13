@@ -18,6 +18,9 @@ struct SettingsView: View {
     @AppStorage("autoplayVideos")
     private var autoplayVideos = true
 
+    @AppStorage("automaticallyRefreshMediaLibrary")
+    private var automaticallyRefreshMediaLibrary = false
+
     var body: some View {
         NavigationStack {
             Form {
@@ -40,6 +43,11 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Toggle(
+                        "Automatically Refresh Media Library",
+                        isOn: $automaticallyRefreshMediaLibrary
+                    )
+
                     Button("Refresh Media Library", action: refreshMediaLibrary)
                         .disabled(isRefreshing)
                 } footer: {
