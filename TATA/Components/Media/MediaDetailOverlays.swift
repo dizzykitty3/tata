@@ -128,36 +128,49 @@ struct MediaPendingDeletionButton: View {
 
 struct MediaDetailActionBar: View {
     @AppStorage(MediaAction.storageKey) private var actionOrder = MediaAction.defaultOrder
+    @AppStorage(MediaAction.hiddenStorageKey) private var hiddenActions = ""
 
     let asset: PHAsset
     let deletionManager: DeletionManager?
     let deletionSource: DeletionManager.Source?
     let dismiss: () -> Void
 
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(MediaAction.ordered(actionOrder)) { action in
-                switch action {
-                case .favorite:
-                    MediaFavoriteButton(asset: asset)
-                case .share:
-                    MediaShareButton(asset: asset)
-                case .delete:
-                    if let deletionManager, let deletionSource {
-                        MediaPendingDeletionButton(
-                            asset: asset,
-                            deletionManager: deletionManager,
-                            source: deletionSource,
-                            dismiss: dismiss
-                        )
-                    }
-                default:
-                    EmptyView()
-                }
+    private var availableActions: [MediaAction] {
+        MediaAction.visibleActions(order: actionOrder, hidden: hiddenActions).filter { action in
+            switch action {
+            case .favorite, .share: return true
+            case .delete: return deletionManager != nil && deletionSource != nil
+            default: return false
             }
         }
-        .padding(.horizontal, 6)
-        .glassEffect(.regular.interactive(), in: .capsule)
+    }
+
+    var body: some View {
+        if !availableActions.isEmpty {
+            HStack(spacing: 0) {
+                ForEach(availableActions) { action in
+                    switch action {
+                    case .favorite:
+                        MediaFavoriteButton(asset: asset)
+                    case .share:
+                        MediaShareButton(asset: asset)
+                    case .delete:
+                        if let deletionManager, let deletionSource {
+                            MediaPendingDeletionButton(
+                                asset: asset,
+                                deletionManager: deletionManager,
+                                source: deletionSource,
+                                dismiss: dismiss
+                            )
+                        }
+                    default:
+                        EmptyView()
+                    }
+                }
+            }
+            .padding(.horizontal, 6)
+            .glassEffect(.regular.interactive(), in: .capsule)
+        }
     }
 }
 

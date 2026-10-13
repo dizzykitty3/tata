@@ -22,6 +22,7 @@ struct ContentView: View {
     private var categoriesModel: CategoriesViewModel
 
     @AppStorage(MediaAction.storageKey) private var actionOrder = MediaAction.defaultOrder
+    @AppStorage(MediaAction.hiddenStorageKey) private var hiddenActions = ""
 
     @StateObject private var playbackControl = MediaPlaybackControl()
 
@@ -164,11 +165,29 @@ struct ContentView: View {
         }
     }
 
+    private var availableSwipeActions: [MediaAction] {
+        MediaAction.visibleActions(order: actionOrder, hidden: hiddenActions).filter { action in
+            switch action {
+            case .playback:
+                guard let asset = swipeModel.current else { return false }
+                return asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive)
+            case .favorite, .share:
+                return swipeModel.current != nil
+            case .undo:
+                return deletionManager.hasPendingAssets(from: .swipe)
+            case .pendingDeletions:
+                return !deletionManager.pendingAssets.isEmpty
+            case .delete:
+                return false
+            }
+        }
+    }
+
     @ViewBuilder
     private var swipeActions: some View {
-        if swipeModel.current != nil || !deletionManager.pendingAssets.isEmpty {
+        if !availableSwipeActions.isEmpty {
             HStack(spacing: 0) {
-                ForEach(MediaAction.ordered(actionOrder)) { action in
+                ForEach(availableSwipeActions) { action in
                     swipeAction(action)
                 }
             }

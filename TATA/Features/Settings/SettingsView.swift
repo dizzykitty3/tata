@@ -52,7 +52,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    NavigationLink("Action Button Order") {
+                    NavigationLink("Action Buttons") {
                         MediaActionOrderView()
                     }
                 }

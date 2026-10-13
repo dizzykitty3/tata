@@ -3,6 +3,18 @@ import SwiftUI
 enum MediaAction: String, CaseIterable, Identifiable {
     case playback, favorite, share, undo, delete, pendingDeletions
 
+    static let hiddenStorageKey = "hiddenMediaActions"
+
+    var isRequired: Bool { self == .playback || self == .pendingDeletions }
+
+    func isVisible(hidden: String) -> Bool {
+        isRequired || !hidden.split(separator: ",").contains(Substring(rawValue))
+    }
+
+    static func visibleActions(order: String, hidden: String) -> [MediaAction] {
+        ordered(order).filter { $0.isVisible(hidden: hidden) }
+    }
+
     static let storageKey = "mediaActionOrder"
     static let defaultOrder = allCases.map(\.rawValue).joined(separator: ",")
 
@@ -44,11 +56,27 @@ enum MediaAction: String, CaseIterable, Identifiable {
 struct MediaActionOrderView: View {
     @AppStorage(MediaAction.storageKey) private var storedOrder = MediaAction.defaultOrder
 
+    @AppStorage(MediaAction.hiddenStorageKey) private var hiddenActions = ""
+
     var body: some View {
         List {
             Section {
                 ForEach(MediaAction.ordered(storedOrder)) { action in
-                    Label(action.title, systemImage: action.symbol)
+                    Toggle(isOn: Binding(
+                        get: { action.isVisible(hidden: hiddenActions) },
+                        set: { isVisible in
+                            var hidden = Set(hiddenActions.split(separator: ",").map(String.init))
+                            if isVisible || action.isRequired {
+                                hidden.remove(action.rawValue)
+                            } else {
+                                hidden.insert(action.rawValue)
+                            }
+                            hiddenActions = hidden.sorted().joined(separator: ",")
+                        }
+                    )) {
+                        Label(action.title, systemImage: action.symbol)
+                    }
+                    .disabled(action.isRequired)
                 }
                 .onMove { source, destination in
                     var actions = MediaAction.ordered(storedOrder)
@@ -56,17 +84,18 @@ struct MediaActionOrderView: View {
                     storedOrder = actions.map(\.rawValue).joined(separator: ",")
                 }
             } footer: {
-                Text("Touch and hold a row to reorder. Only actions available for the current media are shown.")
+                Text("Touch and hold a row to reorder, or use the switches to choose which buttons appear. Play / Pause and View Pending Deletions are always enabled. Buttons appear only when their actions are available.")
             }
 
             Section {
-                Button("Restore Default Order") {
+                Button("Restore Defaults") {
                     storedOrder = MediaAction.defaultOrder
+                    hiddenActions = ""
                 }
                 .foregroundStyle(.blue)
             }
         }
-        .navigationTitle("Action Button Order")
+        .navigationTitle("Action Buttons")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
