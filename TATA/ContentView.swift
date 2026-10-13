@@ -256,7 +256,7 @@ struct ContentView: View {
 
                 let suggestLatest = shouldSuggestLatestAfterRefresh
                 shouldSuggestLatestAfterRefresh = false
-                if suggestLatest && scenePhase == .active {
+                if suggestLatest && scenePhase == .active && swipeModel.canReturnToLatest {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         showsRefreshSuggestion = true
                     }
@@ -279,11 +279,15 @@ struct ContentView: View {
             backgroundedAt = .now
             dismissRefreshSuggestion()
         case .active:
-            guard backgroundedAt != nil else {
+            guard let backgroundedAt else {
                 return
             }
 
             self.backgroundedAt = nil
+            guard Date.now.timeIntervalSince(backgroundedAt) > 5 * 60 else {
+                return
+            }
+
             refreshMediaLibrary(
                 suggestLatest: true
             )
