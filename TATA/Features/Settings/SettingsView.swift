@@ -30,11 +30,11 @@ struct SettingsView: View {
                     Toggle("Autoplay Videos", isOn: $autoplayVideos)
 
                     Toggle(
-                        "Mute by default",
+                        "Mute By Default",
                         isOn: $muteMediaByDefault
                     )
 
-                    Picker("Timeline span", selection: $timelineGrouping) {
+                    Picker("Timeline Span", selection: $timelineGrouping) {
                         ForEach(TimelineGrouping.allCases) { grouping in
                             Text(grouping.title).tag(grouping.rawValue)
                         }
@@ -67,7 +67,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    LabeledContent("Deleted media") {
+                    LabeledContent("Deleted Media") {
                         Text(deletionManager.deletedMediaCount, format: .number)
                             .foregroundStyle(.secondary)
                     }
