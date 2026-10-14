@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var deletionManager: DeletionManager
     let presentUserGuide: () -> Void
+    let clearKeptMediaAndReturnToLatest: () -> Void
 
     @AppStorage(TimelineGrouping.storageKey)
     private var timelineGrouping = TimelineGrouping.date.rawValue
@@ -21,6 +22,8 @@ struct SettingsView: View {
 
     @AppStorage(SwipeViewModel.rememberKeptMediaKey)
     private var rememberKeptMedia = false
+
+    @State private var isConfirmingClearKeptMedia = false
 
     var body: some View {
         NavigationStack {
@@ -47,8 +50,28 @@ struct SettingsView: View {
 
                 Section {
                     Toggle("Remember Kept Media", isOn: $rememberKeptMedia)
+
+                    if !rememberKeptMedia {
+                        Button("Clear Kept Media & Return to Latest") {
+                            isConfirmingClearKeptMedia = true
+                        }
+                        .confirmationDialog(
+                            "Clear Kept Media & Return to Latest?",
+                            isPresented: $isConfirmingClearKeptMedia,
+                            titleVisibility: .visible
+                        ) {
+                            Button("Clear History & Return to Latest", role: .destructive) {
+                                clearKeptMediaAndReturnToLatest()
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text("This will clear your kept media history and return Swipe to the newest available media. This cannot be undone. No photos or videos will be deleted.")
+                        }
+                    }
                 } footer: {
-                    Text("Remember media you swipe left to keep, so you can focus on unreviewed items next time.")
+                    Text(rememberKeptMedia
+                         ? "Remember media you swipe left to keep, so you can focus on unreviewed items next time."
+                         : "Remember media you swipe left to keep, so you can focus on unreviewed items next time. Clear Kept Media & Return to Latest resets this history and returns Swipe to the newest available media without deleting any photos or videos.")
                 }
 
                 Section {
@@ -105,6 +128,7 @@ struct SettingsView: View {
 #Preview {
     SettingsView(
         deletionManager: DeletionManager(),
-        presentUserGuide: {}
+        presentUserGuide: {},
+        clearKeptMediaAndReturnToLatest: {}
     )
 }

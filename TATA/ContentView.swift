@@ -100,7 +100,8 @@ struct ContentView: View {
                         deletionManager: deletionManager,
                         presentUserGuide: {
                             isShowingUserGuide = true
-                        }
+                        },
+                        clearKeptMediaAndReturnToLatest: swipeModel.clearKeptMediaAndReturnToLatest
                     )
                 }
             }

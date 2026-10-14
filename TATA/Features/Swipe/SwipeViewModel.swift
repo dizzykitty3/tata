@@ -18,6 +18,13 @@ final class SwipeViewModel: ObservableObject {
         UserDefaults.standard.set(Array(keptIdentifiers), forKey: Self.keptIdentifiersKey)
     }
 
+    func clearKeptMediaAndReturnToLatest() {
+        keptIdentifiers.removeAll()
+        saveKeptIdentifiers()
+        reset(with: service.fetchAssetSnapshot())
+        returnToLatest()
+    }
+
     private var assets: [PHAsset]
     private var index = 0
     private struct Position: Codable {
