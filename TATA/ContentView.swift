@@ -26,6 +26,8 @@ struct ContentView: View {
 
     @StateObject private var playbackControl = MediaPlaybackControl()
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var isShowingPendingDeletions = false
     @State private var selectedTab: AppTab = .swipe
     @State private var isRefreshingMediaLibrary = false
@@ -161,7 +163,7 @@ struct ContentView: View {
             .padding(.trailing, 8)
             .frame(height: 40)
             .glassEffect(.regular, in: .capsule)
-            .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.95)))
         }
     }
 
@@ -226,13 +228,15 @@ struct ContentView: View {
         case .pendingDeletions:
             if !deletionManager.pendingAssets.isEmpty {
                 Button { isShowingPendingDeletions = true } label: {
-                    Text("Pending Deletions (\(deletionManager.pendingAssets.count))")
+                    Label("\(deletionManager.pendingAssets.count)", systemImage: "trash")
+                            .monospacedDigit()
                         .font(.subheadline.weight(.semibold))
                         .padding(.horizontal, 14)
                         .frame(height: ActionButtonLayout.height)
                         .contentShape(Rectangle())
                 }
-                .accessibilityLabel("Pending Deletions")
+                .accessibilityLabel("View Pending Deletions")
+                    .accessibilityValue("\(deletionManager.pendingAssets.count) items")
             }
         case .delete:
             EmptyView()

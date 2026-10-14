@@ -73,7 +73,8 @@ struct CategoriesView: View {
                     Button {
                         isShowingPendingDeletions = true
                     } label: {
-                        Text("Pending Deletions (\(deletionManager.pendingAssets.count))")
+                        Label("\(deletionManager.pendingAssets.count)", systemImage: "trash")
+                            .monospacedDigit()
                             .font(.subheadline.weight(.semibold))
                             .padding(.horizontal, 14)
                             .frame(height: ActionButtonLayout.height)
@@ -81,7 +82,8 @@ struct CategoriesView: View {
                     .buttonStyle(.plain)
                     .glassEffect(.regular.interactive(), in: .capsule)
                     .buttonBorderShape(.capsule)
-                    .accessibilityLabel("Pending Deletions")
+                    .accessibilityLabel("View Pending Deletions")
+                    .accessibilityValue("\(deletionManager.pendingAssets.count) items")
                     .padding(.bottom, 16)
                 }
             }

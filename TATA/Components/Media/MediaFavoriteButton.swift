@@ -36,6 +36,7 @@ private final class MediaFavorites: NSObject, ObservableObject, PHPhotoLibraryCh
             PHAssetChangeRequest(for: current).isFavorite = desired
         }
         values[identifier] = desired
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 }
 

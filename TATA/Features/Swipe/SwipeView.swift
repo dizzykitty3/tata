@@ -2,6 +2,7 @@ import SwiftUI
 import Photos
 
 struct SwipeView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject private var confirmation = FavoriteDeletionConfirmation()
     private enum DragAxis {
         case horizontal
@@ -63,7 +64,7 @@ struct SwipeView: View {
                         MediaView(asset: next, showsPlaybackButton: false, targetSize: PhotoService.browsingImageSize)
                             .id(next.localIdentifier)
                             .frame(width: proxy.size.width, height: proxy.size.height)
-                            .scaleEffect(0.8 + 0.2 * progress, anchor: .center)
+                            .scaleEffect(reduceMotion ? 1 : 0.8 + 0.2 * progress, anchor: .center)
                             .opacity(isAdvancing ? Double(progress) : 0)
                             .allowsHitTesting(false)
                     }
@@ -93,17 +94,17 @@ struct SwipeView: View {
                         }
                     }
                     .frame(width: proxy.size.width, height: proxy.size.height)
-                    .scaleEffect(shrinksCurrent ? 1 - 0.2 * progress : 1, anchor: .center)
-                    .opacity(isReversing ? Double(1 - progress) : 1)
-                    .offset(isAdvancing ? offset : .zero)
+                    .scaleEffect(!reduceMotion && shrinksCurrent ? 1 - 0.2 * progress : 1, anchor: .center)
+                    .opacity(isReversing || (reduceMotion && isAdvancing) ? Double(1 - progress) : 1)
+                    .offset(!reduceMotion && isAdvancing ? offset : .zero)
                     .zIndex(1)
 
                     if let previous = model.previous {
                         MediaView(asset: previous, showsPlaybackButton: false, targetSize: PhotoService.browsingImageSize)
                             .id(previous.localIdentifier)
                             .frame(width: proxy.size.width, height: proxy.size.height)
-                            .offset(x: -proxy.size.width * (1 - progress))
-                            .opacity(isReversing ? 1 : 0)
+                            .offset(x: reduceMotion ? 0 : -proxy.size.width * (1 - progress))
+                            .opacity(isReversing ? (reduceMotion ? Double(progress) : 1) : 0)
                             .allowsHitTesting(false)
                             .zIndex(2)
                     }
