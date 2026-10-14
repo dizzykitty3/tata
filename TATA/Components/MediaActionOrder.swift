@@ -58,6 +58,8 @@ struct MediaActionOrderView: View {
 
     @AppStorage(MediaAction.hiddenStorageKey) private var hiddenActions = ""
 
+    @State private var isConfirmingRestoreDefaults = false
+
     var body: some View {
         List {
             Section {
@@ -89,10 +91,22 @@ struct MediaActionOrderView: View {
 
             Section {
                 Button("Restore Defaults") {
-                    storedOrder = MediaAction.defaultOrder
-                    hiddenActions = ""
+                    isConfirmingRestoreDefaults = true
                 }
                 .foregroundStyle(.blue)
+                .confirmationDialog(
+                    "Restore Default Action Buttons?",
+                    isPresented: $isConfirmingRestoreDefaults,
+                    titleVisibility: .visible
+                ) {
+                    Button("Restore Defaults", role: .destructive) {
+                        storedOrder = MediaAction.defaultOrder
+                        hiddenActions = ""
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This will enable all action buttons and restore their default order.")
+                }
             }
         }
         .navigationTitle("Action Buttons")
