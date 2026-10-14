@@ -71,6 +71,7 @@ struct CategoriesView: View {
 
                 if !deletionManager.pendingAssets.isEmpty {
                     Button {
+                        ActionFeedback.light()
                         isShowingPendingDeletions = true
                     } label: {
                         Label("\(deletionManager.pendingAssets.count)", systemImage: "trash")

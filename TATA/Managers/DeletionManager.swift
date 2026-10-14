@@ -78,7 +78,7 @@ final class DeletionManager: ObservableObject {
         // Publish once for the entire selection instead of rebuilding UI per item.
         pendingAssets.append(contentsOf: additions)
         savePendingAssets()
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        ActionFeedback.light()
     }
 
     @discardableResult
@@ -92,7 +92,7 @@ final class DeletionManager: ObservableObject {
         let asset = pendingAssets.remove(at: index)
         sourceByAssetIdentifier[asset.localIdentifier] = nil
         savePendingAssets()
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        ActionFeedback.light()
         return asset
     }
 
@@ -126,6 +126,7 @@ final class DeletionManager: ObservableObject {
                         forKey: Self.deletedMediaCountKey
                     )
                     self.clearPendingAssets()
+                    ActionFeedback.success()
                 }
                 completion(result)
             }

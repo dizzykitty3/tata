@@ -12,7 +12,9 @@ struct MediaPlaybackButton: View {
 
     var body: some View {
         Button {
-            control.action?()
+            guard let action = control.action else { return }
+            ActionFeedback.light()
+            action()
         } label: {
             Image(systemName: control.isPlaying ? "pause.fill" : "play.fill")
                 .font(.title3)

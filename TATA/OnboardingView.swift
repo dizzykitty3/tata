@@ -35,6 +35,7 @@ struct OnboardingView: View {
             Spacer()
 
             Button {
+                ActionFeedback.light()
                 handlePhotoPermission()
             } label: {
                 Text(buttonTitle)
@@ -164,6 +165,7 @@ struct UserGuideSheet: View {
             }
             .safeAreaInset(edge: .bottom) {
                 Button {
+                    ActionFeedback.light()
                     onComplete()
                     dismiss()
                 } label: {

@@ -149,6 +149,7 @@ struct ContentView: View {
                 .font(.subheadline.weight(.semibold))
 
                 Button("Back to Latest") {
+                    ActionFeedback.light()
                     dismissRefreshSuggestion()
                     selectedTab = .swipe
                     swipeModel.returnToLatest()
@@ -228,7 +229,10 @@ struct ContentView: View {
             }
         case .pendingDeletions:
             if !deletionManager.pendingAssets.isEmpty {
-                Button { isShowingPendingDeletions = true } label: {
+                Button {
+                    ActionFeedback.light()
+                    isShowingPendingDeletions = true
+                } label: {
                     Label("\(deletionManager.pendingAssets.count)", systemImage: "trash")
                             .monospacedDigit()
                         .font(.subheadline.weight(.semibold))

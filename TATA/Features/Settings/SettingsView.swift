@@ -53,6 +53,7 @@ struct SettingsView: View {
 
                     if !rememberKeptMedia {
                         Button("Clear Kept Media & Return to Latest") {
+                            ActionFeedback.light()
                             isConfirmingClearKeptMedia = true
                         }
                         .confirmationDialog(
@@ -61,6 +62,7 @@ struct SettingsView: View {
                             titleVisibility: .visible
                         ) {
                             Button("Clear History & Return to Latest", role: .destructive) {
+                                ActionFeedback.light()
                                 clearKeptMediaAndReturnToLatest()
                             }
                             Button("Cancel", role: .cancel) {}
@@ -81,7 +83,10 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Button("Show User Guide", action: presentUserGuide)
+                    Button("Show User Guide") {
+                        ActionFeedback.light()
+                        presentUserGuide()
+                    }
                 }
 
                 Section {
@@ -98,6 +103,7 @@ struct SettingsView: View {
                     )
 
                     Button("Open App Settings") {
+                        ActionFeedback.light()
                         openSettings()
                     }
                 }

@@ -25,6 +25,7 @@ struct IncludedAlbumsPills: View {
 
                 if albumTitles.count > 2, !showsAllAlbums {
                     Button {
+                        ActionFeedback.light()
                         showsAllAlbums = true
                     } label: {
                         Text("…")
@@ -69,6 +70,7 @@ struct MediaShareButton: View {
 
     var body: some View {
         Button {
+            ActionFeedback.light()
             prepareShare()
         } label: {
             Image(systemName: "square.and.arrow.up")

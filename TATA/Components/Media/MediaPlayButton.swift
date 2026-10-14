@@ -6,7 +6,10 @@ struct MediaPlayButton: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Button(action: action) {
+            Button {
+                ActionFeedback.light()
+                action()
+            } label: {
                 Image(systemName: "play.circle.fill")
                     .font(.system(size: 64))
                     .symbolRenderingMode(.hierarchical)

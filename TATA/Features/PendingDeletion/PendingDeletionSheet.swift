@@ -105,6 +105,7 @@ struct PendingDeletionSheet: View {
     }
 
     private func deletePendingAssets() {
+        ActionFeedback.light()
         isDeleting = true
 
         deletionManager.deleteAll { result in

@@ -67,6 +67,7 @@ struct MediaActionOrderView: View {
                     Toggle(isOn: Binding(
                         get: { action.isVisible(hidden: hiddenActions) },
                         set: { isVisible in
+                            ActionFeedback.light()
                             var hidden = Set(hiddenActions.split(separator: ",").map(String.init))
                             if isVisible || action.isRequired {
                                 hidden.remove(action.rawValue)
@@ -81,6 +82,7 @@ struct MediaActionOrderView: View {
                     .disabled(action.isRequired)
                 }
                 .onMove { source, destination in
+                    ActionFeedback.light()
                     var actions = MediaAction.ordered(storedOrder)
                     actions.move(fromOffsets: source, toOffset: destination)
                     storedOrder = actions.map(\.rawValue).joined(separator: ",")
@@ -91,6 +93,7 @@ struct MediaActionOrderView: View {
 
             Section {
                 Button("Restore Defaults") {
+                    ActionFeedback.light()
                     isConfirmingRestoreDefaults = true
                 }
                 .foregroundStyle(.blue)
@@ -100,6 +103,7 @@ struct MediaActionOrderView: View {
                     titleVisibility: .visible
                 ) {
                     Button("Restore Defaults", role: .destructive) {
+                        ActionFeedback.light()
                         storedOrder = MediaAction.defaultOrder
                         hiddenActions = ""
                     }
