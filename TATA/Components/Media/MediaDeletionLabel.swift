@@ -21,13 +21,9 @@ struct MediaDeletionLabel: View {
     var body: some View {
         Label {
             HStack(spacing: 0) {
-                Text("\(assets.count) (")
-                ZStack {
-                    Text(sizeText)
-                        .id(sizeText)
-                        .transition(.opacity)
-                }
-                .animation(.easeInOut(duration: 0.2), value: sizeText)
+                CrossfadeText(text: assets.count.formatted())
+                Text(" (")
+                CrossfadeText(text: sizeText)
                 Text(")")
             }
             .monospacedDigit()

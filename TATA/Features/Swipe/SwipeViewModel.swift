@@ -6,6 +6,7 @@ import Combine
 final class SwipeViewModel: ObservableObject {
     private let service = PhotoService.shared
     private let deletionManager: DeletionManager
+    private var subscriptions = Set<AnyCancellable>()
     private let preloadCount = 5
     static let rememberKeptMediaKey = "rememberKeptMedia"
     private static let keptIdentifiersKey = "keptMediaIdentifiers"
@@ -66,6 +67,27 @@ final class SwipeViewModel: ObservableObject {
 
         assets = []
         reset(with: service.fetchAssetSnapshot())
+        deletionManager.$pendingAssets
+            .sink { [weak self] pending in
+                self?.removeFromBrowsing(Set(pending.map(\.localIdentifier)))
+            }
+            .store(in: &subscriptions)
+        deletionManager.$confirmedDeletedIdentifiers
+            .sink { [weak self] identifiers in
+                self?.removeFromBrowsing(identifiers)
+            }
+            .store(in: &subscriptions)
+    }
+
+    private func removeFromBrowsing(_ identifiers: Set<String>) {
+        guard assets.contains(where: { identifiers.contains($0.localIdentifier) }) else { return }
+        // Count surviving items before the cursor, preserving the current asset
+        // or advancing to the next survivor when the current asset is removed.
+        let restoredIndex = assets.prefix(index).filter {
+            !identifiers.contains($0.localIdentifier)
+        }.count
+        assets.removeAll { identifiers.contains($0.localIdentifier) }
+        load(index: restoredIndex)
     }
 
     func reset(with assets: [PHAsset]) {
@@ -74,6 +96,7 @@ final class SwipeViewModel: ObservableObject {
         )
         self.assets = assets.filter {
             !pendingIdentifiers.contains($0.localIdentifier)
+                && !deletionManager.confirmedDeletedIdentifiers.contains($0.localIdentifier)
                 && (!remembersKeptMedia || !keptIdentifiers.contains($0.localIdentifier))
         }
         guard !self.assets.isEmpty, let position = savedPosition else {
@@ -174,6 +197,7 @@ final class SwipeViewModel: ObservableObject {
             fetchResult.object(at: $0)
         }.filter {
             !pendingIdentifiers.contains($0.localIdentifier)
+                && !deletionManager.confirmedDeletedIdentifiers.contains($0.localIdentifier)
                 && (!remembersKeptMedia || !keptIdentifiers.contains($0.localIdentifier))
         }
 
@@ -196,13 +220,5 @@ final class SwipeViewModel: ObservableObject {
             saveKeptIdentifiers()
         }
         deletionManager.add(current, source: .swipe)
-
-        if let deletedIndex = assets.firstIndex(
-            where: { $0.localIdentifier == current.localIdentifier }
-        ) {
-            assets.remove(at: deletedIndex)
-        }
-
-        load(index: index)
     }
 }

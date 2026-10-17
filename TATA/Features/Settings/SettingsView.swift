@@ -91,7 +91,7 @@ struct SettingsView: View {
 
                 Section {
                     LabeledContent("Deleted Media") {
-                        Text(deletionManager.deletedMediaCount, format: .number)
+                        CrossfadeText(text: deletionManager.deletedMediaCount.formatted())
                             .foregroundStyle(.secondary)
                     }
 

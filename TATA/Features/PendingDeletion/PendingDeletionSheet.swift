@@ -60,6 +60,13 @@ struct PendingDeletionSheet: View {
             }
             .navigationTitle("Pending Deletions (\(deletionManager.pendingAssets.count))")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    CrossfadeText(text: "Pending Deletions (\(deletionManager.pendingAssets.count))")
+                        .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
+                }
+            }
             .alert(
                 "Unable to Delete",
                 isPresented: Binding(

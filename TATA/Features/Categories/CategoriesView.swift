@@ -74,7 +74,7 @@ struct CategoriesView: View {
                         ActionFeedback.light()
                         isShowingPendingDeletions = true
                     } label: {
-                        Label("\(deletionManager.pendingAssets.count)", systemImage: "trash")
+                        PendingDeletionCountLabel(count: deletionManager.pendingAssets.count)
                             .monospacedDigit()
                             .font(.subheadline.weight(.semibold))
                             .padding(.horizontal, 14)

@@ -20,6 +20,9 @@ final class DeletionManager: ObservableObject {
     @Published
     private(set) var deletedMediaCount: Int
 
+    // Keep successful deletions excluded from snapshots fetched before completion.
+    @Published private(set) var confirmedDeletedIdentifiers: Set<String> = []
+
     private var sourceByAssetIdentifier: [String: Source] = [:]
 
     private struct PendingEntry: Codable {
@@ -116,16 +119,22 @@ final class DeletionManager: ObservableObject {
             return
         }
 
-        let deletedCount = pendingAssets.count
-        PhotoService.shared.delete(assets: pendingAssets) { result in
+        let assetsToDelete = pendingAssets
+        let deletedIdentifiers = Set(assetsToDelete.map(\.localIdentifier))
+        PhotoService.shared.delete(assets: assetsToDelete) { result in
             Task { @MainActor in
                 if case .success = result {
-                    self.deletedMediaCount += deletedCount
+                    self.confirmedDeletedIdentifiers.formUnion(deletedIdentifiers)
+                    self.deletedMediaCount += assetsToDelete.count
                     UserDefaults.standard.set(
                         self.deletedMediaCount,
                         forKey: Self.deletedMediaCountKey
                     )
-                    self.clearPendingAssets()
+                    self.pendingAssets.removeAll { deletedIdentifiers.contains($0.localIdentifier) }
+                    for identifier in deletedIdentifiers {
+                        self.sourceByAssetIdentifier[identifier] = nil
+                    }
+                    self.savePendingAssets()
                     ActionFeedback.success()
                 }
                 completion(result)

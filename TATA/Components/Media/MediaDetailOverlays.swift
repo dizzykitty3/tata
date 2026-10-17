@@ -306,15 +306,12 @@ struct MediaInfoOverlay: View {
 private struct MediaMetadataPill: View {
     let asset: PHAsset
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     @State private var fileSize: Int64?
     @State private var fileFormat: String?
     @State private var isLoadingSize = true
 
     var body: some View {
-        Text(metadataText)
-            .contentTransition(.opacity)
+        CrossfadeText(text: metadataText)
             .font(.caption.weight(.medium))
             .foregroundStyle(.white)
             .padding(.horizontal, 10)
@@ -323,10 +320,7 @@ private struct MediaMetadataPill: View {
                 Color(uiColor: .systemGray).opacity(0.55),
                 in: Capsule()
             )
-            .animation(
-                reduceMotion ? nil : .easeInOut(duration: 0.2),
-                value: metadataText
-            )
+
             .task(id: asset.localIdentifier) {
                 fileSize = nil
                 fileFormat = nil
