@@ -5,7 +5,6 @@ struct MediaDeletionLabel: View {
     let assets: [PHAsset]
     let actionName: String
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var totalSize: Int64?
     @State private var completedIdentifiers: [String]?
 
@@ -15,23 +14,31 @@ struct MediaDeletionLabel: View {
 
     private var sizeText: String {
         if assets.isEmpty { return MediaFileFormatting.size(0) }
-        guard completedIdentifiers == identifiers else { return "…" }
-        guard let totalSize else { return "—" }
+        guard let totalSize else { return completedIdentifiers == nil ? "…" : "—" }
         return MediaFileFormatting.size(totalSize)
     }
 
     var body: some View {
-        Label("\(assets.count) (\(sizeText))", systemImage: "trash")
-            .contentTransition(.opacity)
-            .animation(
-                reduceMotion ? nil : .easeInOut(duration: 0.2),
-                value: "\(assets.count) \(sizeText)"
-            )
-            .accessibilityLabel("\(actionName), \(assets.count) items, \(sizeText)")
+        Label {
+            HStack(spacing: 0) {
+                Text("\(assets.count) (")
+                ZStack {
+                    Text(sizeText)
+                        .id(sizeText)
+                        .transition(.opacity)
+                }
+                .animation(.easeInOut(duration: 0.2), value: sizeText)
+                Text(")")
+            }
+            .monospacedDigit()
+        } icon: {
+            Image(systemName: "trash")
+        }
+            .accessibilityLabel("\(actionName), \(assets.count) items, \(completedIdentifiers == identifiers ? sizeText : "Calculating size")")
             .task(id: identifiers) {
                 let requestedIdentifiers = identifiers
-                totalSize = nil
-                completedIdentifiers = nil
+                // Keep the previous result until its replacement is ready, avoiding
+                // a placeholder flash for every selection change.
                 do {
                     var total: Int64 = 0
                     for asset in assets {
@@ -42,6 +49,7 @@ struct MediaDeletionLabel: View {
                     completedIdentifiers = requestedIdentifiers
                 } catch {
                     guard !Task.isCancelled else { return }
+                    totalSize = nil
                     completedIdentifiers = requestedIdentifiers
                 }
             }
