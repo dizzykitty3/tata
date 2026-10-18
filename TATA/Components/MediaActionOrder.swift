@@ -88,7 +88,7 @@ struct MediaActionOrderView: View {
                     storedOrder = actions.map(\.rawValue).joined(separator: ",")
                 }
             } footer: {
-                Text("Touch and hold a row to reorder, or use the switches to choose which buttons appear. Play / Pause and View Pending Deletions are always enabled. Buttons appear only when their actions are available.")
+                Text("Touch and hold a row to reorder.")
             }
 
             Section {
