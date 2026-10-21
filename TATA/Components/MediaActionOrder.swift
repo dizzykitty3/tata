@@ -100,7 +100,7 @@ struct MediaActionOrderView: View {
                 .confirmationDialog(
                     "Restore Default Action Buttons?",
                     isPresented: $isConfirmingRestoreDefaults,
-                    titleVisibility: .visible
+                    titleVisibility: .hidden
                 ) {
                     Button("Restore Defaults", role: .destructive) {
                         ActionFeedback.light()

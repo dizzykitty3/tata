@@ -59,7 +59,7 @@ struct SettingsView: View {
                         .confirmationDialog(
                             "Clear Kept Media & Return to Latest?",
                             isPresented: $isConfirmingClearKeptMedia,
-                            titleVisibility: .visible
+                            titleVisibility: .hidden
                         ) {
                             Button("Clear History & Return to Latest", role: .destructive) {
                                 ActionFeedback.light()
@@ -71,9 +71,7 @@ struct SettingsView: View {
                         }
                     }
                 } footer: {
-                    Text(rememberKeptMedia
-                         ? "Remember media you swipe left to keep, so you can focus on unreviewed items next time."
-                         : "Remember media you swipe left to keep, so you can focus on unreviewed items next time. Clear Kept Media & Return to Latest resets this history and returns Swipe to the newest available media without deleting any photos or videos.")
+                    Text("Remember media you swipe left to keep, so you can focus on unreviewed items next time.")
                 }
 
                 Section {
