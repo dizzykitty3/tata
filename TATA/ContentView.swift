@@ -32,6 +32,8 @@ struct ContentView: View {
     @State private var selectedTab: AppTab = .swipe
     @State private var isRefreshingMediaLibrary = false
     @State private var shouldSuggestLatestAfterRefresh = false
+    @State private var needsRefreshAfterCurrent = false
+    @State private var hasCheckedInitialLatestSuggestion = false
     @State private var refreshGeneration = 0
     @State private var showsRefreshSuggestion = false
     @State private var backgroundedAt: Date?
@@ -122,10 +124,17 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhaseChange(newPhase)
         }
+        .onChange(of: deletionManager.deletedMediaCount) { _, _ in
+            refreshMediaLibrary(suggestLatest: false, requiresFreshSnapshot: true)
+        }
+        .onChange(of: isShowingUserGuide) { _, isShowing in
+            if !isShowing { checkInitialLatestSuggestion() }
+        }
         .onAppear {
             if !hasCompletedUserGuide {
                 isShowingUserGuide = true
             }
+            checkInitialLatestSuggestion()
         }
         .sheet(isPresented: $isShowingPendingDeletions) {
             PendingDeletionSheet(deletionManager: deletionManager)
@@ -259,9 +268,10 @@ struct ContentView: View {
         }
     }
 
-    private func refreshMediaLibrary(suggestLatest: Bool) {
+    private func refreshMediaLibrary(suggestLatest: Bool, requiresFreshSnapshot: Bool = false) {
         shouldSuggestLatestAfterRefresh = shouldSuggestLatestAfterRefresh || suggestLatest
         guard !isRefreshingMediaLibrary else {
+            needsRefreshAfterCurrent = needsRefreshAfterCurrent || requiresFreshSnapshot
             return
         }
 
@@ -273,6 +283,14 @@ struct ContentView: View {
             let albums = PhotoService.shared.fetchAlbumSnapshot()
 
             DispatchQueue.main.async {
+                // A deletion may finish after this fetch started. Discard that
+                // snapshot and fetch again instead of restoring deleted media.
+                if needsRefreshAfterCurrent {
+                    needsRefreshAfterCurrent = false
+                    isRefreshingMediaLibrary = false
+                    refreshMediaLibrary(suggestLatest: false)
+                    return
+                }
                 swipeModel.reset(with: assets)
                 timelineModel.reload(
                     assets: assets,
@@ -307,6 +325,7 @@ struct ContentView: View {
             backgroundedAt = .now
             dismissRefreshSuggestion()
         case .active:
+            checkInitialLatestSuggestion()
             guard let backgroundedAt else {
                 return
             }
@@ -330,6 +349,14 @@ struct ContentView: View {
         withAnimation(.easeInOut(duration: 0.2)) {
             showsRefreshSuggestion = false
         }
+    }
+
+    private func checkInitialLatestSuggestion() {
+        guard !hasCheckedInitialLatestSuggestion,
+              scenePhase == .active,
+              !isShowingUserGuide else { return }
+        hasCheckedInitialLatestSuggestion = true
+        showsRefreshSuggestion = swipeModel.canReturnToLatest
     }
 }
 
