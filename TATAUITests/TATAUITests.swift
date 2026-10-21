@@ -1,10 +1,3 @@
-//
-//  TATAUITests.swift
-//  TATAUITests
-//
-//  Created by Theo on 8/2/26.
-//
-
 import XCTest
 
 final class TATAUITests: XCTestCase {

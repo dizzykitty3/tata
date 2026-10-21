@@ -1,10 +1,3 @@
-//
-//  TATATests.swift
-//  TATATests
-//
-//  Created by Theo on 8/2/26.
-//
-
 import Testing
 
 struct TATATests {
