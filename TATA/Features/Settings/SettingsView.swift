@@ -93,6 +93,11 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
 
+                    LabeledContent("Storage Saved") {
+                        CrossfadeText(text: MediaFileFormatting.size(deletionManager.deletedMediaBytes))
+                            .foregroundStyle(.secondary)
+                    }
+
                     LabeledContent("Version", value: versionString)
 
                     Link(

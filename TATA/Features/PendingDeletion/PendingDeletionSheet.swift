@@ -124,7 +124,7 @@ struct PendingDeletionSheet: View {
             case .cancelled:
                 break
             case .failure:
-                errorMessage = "The selected media could not be deleted."
+                errorMessage = "Unable to read the file sizes or delete the selected media. Please try again."
             }
         }
     }

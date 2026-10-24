@@ -6,6 +6,10 @@ import UIKit
 @MainActor
 final class DeletionManager: ObservableObject {
     static let deletedMediaCountKey = "deletedMediaCount"
+    private static let deletedMediaBytesKey = "deletedMediaBytes"
+    private var isDeleting = false
+
+    @Published private(set) var deletedMediaBytes: Int64
     private static let pendingAssetsKey = "pendingDeletionAssets"
 
     enum Source: String, Codable {
@@ -34,6 +38,7 @@ final class DeletionManager: ObservableObject {
         deletedMediaCount = UserDefaults.standard.integer(
             forKey: Self.deletedMediaCountKey
         )
+        deletedMediaBytes = (UserDefaults.standard.object(forKey: Self.deletedMediaBytesKey) as? NSNumber)?.int64Value ?? 0
         restorePendingAssets()
     }
 
@@ -114,6 +119,10 @@ final class DeletionManager: ObservableObject {
     func deleteAll(
         completion: @escaping (PhotoDeletionResult) -> Void
     ) {
+        guard !isDeleting else {
+            completion(.cancelled)
+            return
+        }
         guard !pendingAssets.isEmpty else {
             completion(.success)
             return
@@ -121,23 +130,46 @@ final class DeletionManager: ObservableObject {
 
         let assetsToDelete = pendingAssets
         let deletedIdentifiers = Set(assetsToDelete.map(\.localIdentifier))
-        PhotoService.shared.delete(assets: assetsToDelete) { result in
-            Task { @MainActor in
-                if case .success = result {
-                    self.confirmedDeletedIdentifiers.formUnion(deletedIdentifiers)
-                    self.deletedMediaCount += assetsToDelete.count
-                    UserDefaults.standard.set(
-                        self.deletedMediaCount,
-                        forKey: Self.deletedMediaCountKey
-                    )
-                    self.pendingAssets.removeAll { deletedIdentifiers.contains($0.localIdentifier) }
-                    for identifier in deletedIdentifiers {
-                        self.sourceByAssetIdentifier[identifier] = nil
-                    }
-                    self.savePendingAssets()
-                    ActionFeedback.success()
+        isDeleting = true
+        Task { @MainActor in
+            // Read resources before deletion; after success they may be unavailable.
+            let deletedBytes: Int64
+            do {
+                var total: Int64 = 0
+                for asset in assetsToDelete {
+                    total += try await PhotoService.shared.mediaFileSize(asset: asset)
                 }
-                completion(result)
+                deletedBytes = total
+            } catch {
+                isDeleting = false
+                completion(.failure)
+                return
+            }
+
+            PhotoService.shared.delete(assets: assetsToDelete) { result in
+                Task { @MainActor in
+                    self.isDeleting = false
+                    if case .success = result {
+                        self.confirmedDeletedIdentifiers.formUnion(deletedIdentifiers)
+                        self.deletedMediaCount += assetsToDelete.count
+                        self.deletedMediaBytes += deletedBytes
+                        UserDefaults.standard.set(
+                            self.deletedMediaCount,
+                            forKey: Self.deletedMediaCountKey
+                        )
+                        UserDefaults.standard.set(
+                            self.deletedMediaBytes,
+                            forKey: Self.deletedMediaBytesKey
+                        )
+                        self.pendingAssets.removeAll { deletedIdentifiers.contains($0.localIdentifier) }
+                        for identifier in deletedIdentifiers {
+                            self.sourceByAssetIdentifier[identifier] = nil
+                        }
+                        self.savePendingAssets()
+                        ActionFeedback.success()
+                    }
+                    completion(result)
+                }
             }
         }
     }
