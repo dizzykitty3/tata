@@ -180,6 +180,9 @@ struct MediaDetailActionBar: View {
 }
 
 struct MediaPhotoPreviewSheet: View {
+    @AppStorage("tapToHideMediaUI") private var tapToHideMediaUI = true
+    @State private var isUIHidden = false
+
     let asset: PHAsset
     let deletionManager: DeletionManager?
     let deletionSource: DeletionManager.Source?
@@ -205,6 +208,8 @@ struct MediaPhotoPreviewSheet: View {
                 contentMode: .fit
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
+            .onTapGesture { if tapToHideMediaUI { isUIHidden.toggle() } }
 
             VStack {
                 HStack {
@@ -224,6 +229,7 @@ struct MediaPhotoPreviewSheet: View {
                 )
                     .padding(.bottom, 16)
             }
+            .mediaChromeHidden(tapToHideMediaUI && isUIHidden)
         }
         .navigationTitle("Photo")
         .navigationBarTitleDisplayMode(.inline)

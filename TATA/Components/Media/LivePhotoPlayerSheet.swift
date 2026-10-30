@@ -4,6 +4,9 @@ import PhotosUI
 import UIKit
 
 struct LivePhotoPlayerSheet: View {
+    @AppStorage("tapToHideMediaUI") private var tapToHideMediaUI = true
+    @State private var isUIHidden = false
+
     let asset: PHAsset
     let deletionManager: DeletionManager?
     let deletionSource: DeletionManager.Source?
@@ -74,6 +77,8 @@ struct LivePhotoPlayerSheet: View {
                     ProgressView()
                 }
             }
+            .contentShape(Rectangle())
+            .onTapGesture { if tapToHideMediaUI { isUIHidden.toggle() } }
 
             VStack {
                 HStack {
@@ -93,6 +98,10 @@ struct LivePhotoPlayerSheet: View {
                 )
                     .padding(.bottom, 16)
             }
+            .mediaChromeHidden(tapToHideMediaUI && isUIHidden)
+        }
+        .onChange(of: tapToHideMediaUI) { _, enabled in
+            if !enabled { isUIHidden = false }
         }
         .onAppear {
             isPlaybackViewVisible = true

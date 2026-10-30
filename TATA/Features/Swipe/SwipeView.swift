@@ -3,6 +3,8 @@ import Photos
 
 struct SwipeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage("tapToHideMediaUI") private var tapToHideMediaUI = true
+    @Binding var isUIHidden: Bool
     @StateObject private var confirmation = FavoriteDeletionConfirmation()
     private enum DragAxis {
         case horizontal
@@ -47,7 +49,8 @@ struct SwipeView: View {
         return min(max(distance / max(extent, 1), 0), 1)
     }
 
-    init(model: SwipeViewModel, playbackControl: MediaPlaybackControl? = nil) {
+    init(model: SwipeViewModel, playbackControl: MediaPlaybackControl? = nil, isUIHidden: Binding<Bool> = .constant(false)) {
+        self._isUIHidden = isUIHidden
         self.model = model
         self.playbackControl = playbackControl
     }
@@ -113,6 +116,10 @@ struct SwipeView: View {
                 .clipped()
                 .contentShape(Rectangle())
                 .gesture(dragGesture(in: proxy.size))
+                .onTapGesture {
+                    guard tapToHideMediaUI, !isTransitioning else { return }
+                    isUIHidden.toggle()
+                }
             }
             .ignoresSafeArea(.container, edges: .vertical)
             .overlay(alignment: .topLeading) {
@@ -120,6 +127,7 @@ struct SwipeView: View {
                     MediaInfoOverlay(asset: asset)
                         .padding(.top, safeAreaProxy.safeAreaInsets.top + 6)
                         .padding(.leading, 16)
+                        .mediaChromeHidden(tapToHideMediaUI && isUIHidden)
                 }
             }
         }

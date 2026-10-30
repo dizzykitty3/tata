@@ -31,6 +31,9 @@ struct ContentView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var isShowingPendingDeletions = false
+    @AppStorage("tapToHideMediaUI") private var tapToHideMediaUI = true
+    @State private var isSwipeUIHidden = false
+
     @State private var selectedTab: AppTab = .swipe
     @State private var isRefreshingMediaLibrary = false
     @State private var shouldSuggestLatestAfterRefresh = false
@@ -65,7 +68,7 @@ struct ContentView: View {
             TabView(selection: $selectedTab) {
                 Tab("Swipe", systemImage: "hand.draw", value: .swipe) {
                     mediaTabContent {
-                        SwipeView(model: swipeModel, playbackControl: playbackControl)
+                        SwipeView(model: swipeModel, playbackControl: playbackControl, isUIHidden: $isSwipeUIHidden)
                             .id(refreshGeneration)
                     }
                     .overlay(alignment: .bottom) {
@@ -81,7 +84,9 @@ struct ContentView: View {
                             }
                         }
                         .padding(.bottom, 16)
+                        .mediaChromeHidden(tapToHideMediaUI && isSwipeUIHidden)
                     }
+                    .toolbar(tapToHideMediaUI && isSwipeUIHidden ? .hidden : .visible, for: .tabBar)
                 }
 
                 Tab("Timeline", systemImage: "calendar", value: .date) {
@@ -138,6 +143,10 @@ struct ContentView: View {
                 dismissRefreshSuggestion()
             } catch {}
         }
+        .onChange(of: tapToHideMediaUI) { _, enabled in
+            if !enabled { isSwipeUIHidden = false }
+        }
+        .onChange(of: selectedTab) { _, _ in isSwipeUIHidden = false }
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhaseChange(newPhase)
         }

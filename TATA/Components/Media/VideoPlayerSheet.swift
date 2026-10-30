@@ -5,6 +5,9 @@ import AVKit
 import UIKit
 
 struct VideoPlayerSheet: View {
+    @AppStorage("tapToHideMediaUI") private var tapToHideMediaUI = true
+    @State private var isUIHidden = false
+
     let asset: PHAsset
     let deletionManager: DeletionManager?
     let deletionSource: DeletionManager.Source?
@@ -42,6 +45,8 @@ struct VideoPlayerSheet: View {
                     ProgressView()
                 }
             }
+            .contentShape(Rectangle())
+            .onTapGesture { if tapToHideMediaUI { isUIHidden.toggle() } }
 
             VStack {
                 HStack {
@@ -54,6 +59,7 @@ struct VideoPlayerSheet: View {
                 Spacer()
 
             }
+            .mediaChromeHidden(tapToHideMediaUI && isUIHidden)
         }
         .safeAreaInset(edge: .bottom) {
             Group {
@@ -65,6 +71,10 @@ struct VideoPlayerSheet: View {
                 }
             }
             .padding(.vertical, 12)
+            .mediaChromeHidden(tapToHideMediaUI && isUIHidden)
+        }
+        .onChange(of: tapToHideMediaUI) { _, enabled in
+            if !enabled { isUIHidden = false }
         }
         .onAppear {
             isPlaybackViewVisible = true

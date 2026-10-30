@@ -24,6 +24,8 @@ struct SettingsView: View {
     @AppStorage(SwipeViewModel.rememberKeptMediaKey)
     private var rememberKeptMedia = false
 
+    @AppStorage("tapToHideMediaUI") private var tapToHideMediaUI = true
+
     @State private var isConfirmingClearKeptMedia = false
 
     var body: some View {
@@ -78,12 +80,12 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Toggle("Tap to Hide UI", isOn: $tapToHideMediaUI)
+
                     NavigationLink("Action Buttons") {
                         MediaActionOrderView()
                     }
-                }
 
-                Section {
                     Button("Show User Guide") {
                         ActionFeedback.light()
                         presentUserGuide()

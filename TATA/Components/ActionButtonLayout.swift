@@ -58,3 +58,13 @@ struct BlockingActionOverlay: View {
         }
     }
 }
+
+extension View {
+    /// Keep playback and layout alive while hiding only the viewing controls.
+    func mediaChromeHidden(_ hidden: Bool) -> some View {
+        opacity(hidden ? 0 : 1)
+            .allowsHitTesting(!hidden)
+            .accessibilityHidden(hidden)
+            .animation(.easeInOut(duration: 0.2), value: hidden)
+    }
+}
