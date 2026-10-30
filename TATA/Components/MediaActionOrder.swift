@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum MediaAction: String, CaseIterable, Identifiable {
-    case playback, favorite, share, undo, delete, pendingDeletions
+    case playback, mute, favorite, share, undo, delete, pendingDeletions
 
     static let hiddenStorageKey = "hiddenMediaActions"
 
@@ -23,6 +23,7 @@ enum MediaAction: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .playback: "Play / Pause"
+        case .mute: "Mute / Unmute"
         case .favorite: "Favorite"
         case .share: "Share"
         case .undo: "Undo"
@@ -34,6 +35,7 @@ enum MediaAction: String, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .playback: "playpause"
+        case .mute: "speaker.slash"
         case .favorite: "heart"
         case .share: "square.and.arrow.up"
         case .undo: "arrow.uturn.backward"
@@ -48,6 +50,9 @@ enum MediaAction: String, CaseIterable, Identifiable {
             if let action = MediaAction(rawValue: String(value)), !result.contains(action) {
                 result.append(action)
             }
+        }
+        if !result.contains(.mute), let playbackIndex = result.firstIndex(of: .playback) {
+            result.insert(.mute, at: playbackIndex + 1)
         }
         return result + allCases.filter { !result.contains($0) }
     }

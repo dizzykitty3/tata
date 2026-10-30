@@ -69,8 +69,8 @@ struct VideoThumbnailView: View {
                 playback.start(asset: asset)
             } catch {}
         }
-        .onChange(of: muteController.hasManualVolumeOverride) { _, overridden in
-            if overridden { playback.player?.isMuted = false }
+        .onChange(of: muteController.shouldMuteNewPlayback) { _, muted in
+            playback.player?.isMuted = muted
         }
         .sheet(isPresented: $isShowingPlayer) {
             NavigationStack {

@@ -6,7 +6,7 @@ struct InlineLivePhotoPlayer: UIViewRepresentable {
     let asset: PHAsset
     let isActive: Bool
     let hasPlayed: Bool
-    let hasManualVolumeOverride: Bool
+    let isMuted: Bool
     let contentMode: ContentMode
     let onStart: () -> Void
 
@@ -46,7 +46,7 @@ struct InlineLivePhotoPlayer: UIViewRepresentable {
                 stop()
                 return
             }
-            if configuration.hasManualVolumeOverride { view?.isMuted = false }
+            view?.isMuted = configuration.isMuted
             guard !configuration.hasPlayed, !didStart, requestID == nil else { return }
             let token = UUID()
             generation = token

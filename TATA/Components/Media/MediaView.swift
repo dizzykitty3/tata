@@ -83,7 +83,7 @@ struct LivePhotoView: View {
                     asset: asset,
                     isActive: isVisible && scenePhase == .active && !isShowingPlayer && (manuallyPlaying || (shouldAutoplay && autoplayReady)),
                     hasPlayed: hasAutoplayed,
-                    hasManualVolumeOverride: muteController.hasManualVolumeOverride,
+                    isMuted: muteController.shouldMuteNewPlayback,
                     contentMode: contentMode,
                     onStart: { hasAutoplayed = true }
                 )

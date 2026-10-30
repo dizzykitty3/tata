@@ -108,12 +108,8 @@ struct LivePhotoPlayerSheet: View {
                 self.livePhoto = livePhoto
             }
         }
-        .onChange(of: muteController.hasManualVolumeOverride) { _, hasOverride in
-            guard hasOverride, isMutedByDefault else {
-                return
-            }
-
-            isMutedByDefault = false
+        .onChange(of: muteController.shouldMuteNewPlayback) { _, muted in
+            isMutedByDefault = muted
         }
         .onDisappear {
             isPlaybackViewVisible = false

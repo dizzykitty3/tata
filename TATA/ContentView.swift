@@ -199,7 +199,7 @@ struct ContentView: View {
     private var availableSwipeActions: [MediaAction] {
         MediaAction.visibleActions(order: actionOrder, hidden: hiddenActions).filter { action in
             switch action {
-            case .playback:
+            case .playback, .mute:
                 guard let asset = swipeModel.current else { return false }
                 return asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive)
             case .favorite, .share:
@@ -237,6 +237,8 @@ struct ContentView: View {
                asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive) {
                 MediaPlaybackButton(control: playbackControl)
             }
+        case .mute:
+            MediaMuteButton()
         case .favorite:
             if let asset = swipeModel.current { MediaFavoriteButton(asset: asset) }
         case .share:

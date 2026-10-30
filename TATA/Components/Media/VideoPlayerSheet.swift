@@ -83,13 +83,9 @@ struct VideoPlayerSheet: View {
                 }
             }
         }
-        .onChange(of: muteController.hasManualVolumeOverride) { _, hasOverride in
-            guard hasOverride, isMutedByDefault else {
-                return
-            }
-
-            player?.isMuted = false
-            isMutedByDefault = false
+        .onChange(of: muteController.shouldMuteNewPlayback) { _, muted in
+            isMutedByDefault = muted
+            player?.isMuted = muted
         }
         .onDisappear {
             isPlaybackViewVisible = false

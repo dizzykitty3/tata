@@ -140,6 +140,7 @@ struct MediaDetailActionBar: View {
     private var availableActions: [MediaAction] {
         MediaAction.visibleActions(order: actionOrder, hidden: hiddenActions).filter { action in
             switch action {
+            case .mute: return asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive)
             case .favorite, .share: return true
             case .delete: return deletionManager != nil && deletionSource != nil
             default: return false
@@ -152,6 +153,8 @@ struct MediaDetailActionBar: View {
             HStack(spacing: 0) {
                 ForEach(availableActions) { action in
                     switch action {
+                    case .mute:
+                        MediaMuteButton()
                     case .favorite:
                         MediaFavoriteButton(asset: asset)
                     case .share:
@@ -263,8 +266,7 @@ struct MediaInfoOverlay: View {
 
     private var showsMutedPill: Bool {
         (asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive))
-            && muteMediaByDefault
-            && !muteController.hasManualVolumeOverride
+            && muteController.shouldMuteNewPlayback
     }
 
     var body: some View {
@@ -346,17 +348,8 @@ private struct MediaMetadataPill: View {
         let size = fileSize.map(MediaFileFormatting.size) ?? (isLoadingSize ? "…" : "—")
         var components = [size]
         if let fileFormat { components.append(fileFormat) }
-        if asset.mediaType == .video { components.append(formattedDuration) }
         return components.joined(separator: " ")
     }
 
-    private var formattedDuration: String {
-        let duration = asset.duration
-        let seconds = duration.isFinite ? Int(max(0, duration)) : 0
-        if seconds >= 3600 {
-            return String(format: "%02d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
-        }
-        return String(format: "%02d:%02d", seconds / 60, seconds % 60)
-    }
 
 }

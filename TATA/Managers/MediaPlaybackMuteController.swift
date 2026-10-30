@@ -10,6 +10,12 @@ final class MediaPlaybackMuteController: NSObject, ObservableObject {
 
     @Published private(set) var hasManualVolumeOverride = false
 
+    @Published private var manualMute: Bool?
+
+    func toggleMute() {
+        manualMute = !shouldMuteNewPlayback
+    }
+
     private let audioSession = AVAudioSession.sharedInstance()
     private var outputVolumeObservation: NSKeyValueObservation?
     private var mutedPlaybackCount = 0
@@ -19,8 +25,8 @@ final class MediaPlaybackMuteController: NSObject, ObservableObject {
     }
 
     var shouldMuteNewPlayback: Bool {
-        UserDefaults.standard.bool(forKey: Self.defaultMuteKey) &&
-            !hasManualVolumeOverride
+        manualMute ?? (UserDefaults.standard.bool(forKey: Self.defaultMuteKey) &&
+            !hasManualVolumeOverride)
     }
 
     func beginMutedPlaybackIfNeeded() -> Bool {
@@ -64,6 +70,7 @@ final class MediaPlaybackMuteController: NSObject, ObservableObject {
             return
         }
 
+        manualMute = false
         hasManualVolumeOverride = true
     }
 }
