@@ -70,7 +70,6 @@ struct ContentView: View {
                     }
                     .overlay(alignment: .bottom) {
                         VStack(spacing: 20) {
-                            refreshSuggestion
                             if let asset = swipeModel.current,
                                asset.mediaType == .video,
                                playbackControl.videoAssetIdentifier == asset.localIdentifier,
@@ -168,31 +167,21 @@ struct ContentView: View {
     @ViewBuilder
     private var refreshSuggestion: some View {
         if showsRefreshSuggestion {
-            HStack(spacing: 10) {
-                Label(
-                    "Continue from the latest media",
-                    systemImage: "photo.badge.plus"
-                )
-                .font(.subheadline.weight(.semibold))
-
-                Button("Back to Latest") {
-                    ActionFeedback.light()
-                    dismissRefreshSuggestion()
-                    selectedTab = .swipe
-                    swipeModel.returnToLatest()
-                }
-                .font(.subheadline.weight(.semibold))
-                .buttonStyle(.glass)
-                .buttonBorderShape(.capsule)
-                .controlSize(.small)
-                .accessibilityHint("Returns to the newest media in Swipe")
+            Button {
+                ActionFeedback.light()
+                dismissRefreshSuggestion()
+                selectedTab = .swipe
+                swipeModel.returnToLatest()
+            } label: {
+                Text("Back to Latest")
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 14)
+                    .frame(height: ActionButtonLayout.height)
+                    .contentShape(Rectangle())
             }
-            .foregroundStyle(Color(uiColor: .label))
-            .padding(.leading, 16)
-            .padding(.trailing, 8)
-            .frame(height: 40)
-            .glassEffect(.regular, in: .capsule)
-            .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.95)))
+            .accessibilityLabel("Back to Latest")
+            .accessibilityHint("Returns to the newest media in Swipe")
+            .transition(.opacity)
         }
     }
 
@@ -216,11 +205,12 @@ struct ContentView: View {
 
     @ViewBuilder
     private var swipeActions: some View {
-        if !availableSwipeActions.isEmpty {
+        if !availableSwipeActions.isEmpty || showsRefreshSuggestion {
             HStack(spacing: 0) {
                 ForEach(availableSwipeActions) { action in
                     swipeAction(action)
                 }
+                refreshSuggestion
             }
             .buttonStyle(.plain)
             .foregroundStyle(.primary)

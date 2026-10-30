@@ -251,7 +251,7 @@ struct VideoProgressBar: View {
         }
         .font(.caption.monospacedDigit())
         .padding(.horizontal, 16)
-        .frame(minHeight: ActionButtonLayout.height)
+        .frame(minHeight: 44, idealHeight: 44, maxHeight: .infinity)
         .glassEffect(.regular, in: .capsule)
         .onAppear { scrubber.attach(player) }
         .onDisappear { scrubber.detach() }
@@ -293,7 +293,10 @@ private struct VideoControlsLayout: Layout {
         let actions = subviews[1].sizeThatFits(.unspecified)
         let width = proposal.width ?? minimumProgressWidth + actions.width + spacing
         let wide = horizontal(width, actions)
-        let progress = subviews[0].sizeThatFits(ProposedViewSize(width: wide ? width - actions.width - spacing : width, height: nil))
+        let progress = subviews[0].sizeThatFits(ProposedViewSize(
+            width: wide ? width - actions.width - spacing : width,
+            height: wide ? max(44, actions.height) : 44
+        ))
         return CGSize(width: width, height: wide ? max(progress.height, actions.height) : progress.height + spacing + actions.height)
     }
 
@@ -305,7 +308,7 @@ private struct VideoControlsLayout: Layout {
                               proposal: ProposedViewSize(width: bounds.width - actions.width - spacing, height: bounds.height))
             subviews[1].place(at: CGPoint(x: bounds.maxX, y: bounds.midY), anchor: .trailing, proposal: .unspecified)
         } else {
-            let progress = subviews[0].sizeThatFits(ProposedViewSize(width: bounds.width, height: nil))
+            let progress = subviews[0].sizeThatFits(ProposedViewSize(width: bounds.width, height: 44))
             subviews[0].place(at: bounds.origin, proposal: ProposedViewSize(width: bounds.width, height: progress.height))
             subviews[1].place(at: CGPoint(x: bounds.midX, y: bounds.maxY), anchor: .bottom, proposal: .unspecified)
         }
