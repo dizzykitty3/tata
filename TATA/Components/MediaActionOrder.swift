@@ -54,6 +54,7 @@ enum MediaAction: String, CaseIterable, Identifiable {
 }
 
 struct MediaActionOrderView: View {
+    @EnvironmentObject private var blockingAction: BlockingActionController
     @AppStorage(MediaAction.storageKey) private var storedOrder = MediaAction.defaultOrder
 
     @AppStorage(MediaAction.hiddenStorageKey) private var hiddenActions = ""
@@ -104,8 +105,10 @@ struct MediaActionOrderView: View {
                 ) {
                     Button("Restore Defaults", role: .destructive) {
                         ActionFeedback.light()
-                        storedOrder = MediaAction.defaultOrder
-                        hiddenActions = ""
+                        blockingAction.run(message: "Restoring Defaults…") {
+                            storedOrder = MediaAction.defaultOrder
+                            hiddenActions = ""
+                        }
                     }
                     Button("Cancel", role: .cancel) {}
                 } message: {

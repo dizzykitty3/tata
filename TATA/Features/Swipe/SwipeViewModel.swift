@@ -19,10 +19,15 @@ final class SwipeViewModel: ObservableObject {
         UserDefaults.standard.set(Array(keptIdentifiers), forKey: Self.keptIdentifiersKey)
     }
 
-    func clearKeptMediaAndReturnToLatest() {
+    func clearKeptMediaAndReturnToLatest() async {
+        let snapshot: [PHAsset] = await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                continuation.resume(returning: PhotoService.shared.fetchAssetSnapshot())
+            }
+        }
         keptIdentifiers.removeAll()
         saveKeptIdentifiers()
-        reset(with: service.fetchAssetSnapshot())
+        reset(with: snapshot)
         returnToLatest()
     }
 

@@ -3,7 +3,8 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var deletionManager: DeletionManager
     let presentUserGuide: () -> Void
-    let clearKeptMediaAndReturnToLatest: () -> Void
+    let clearKeptMediaAndReturnToLatest: () async -> Void
+    @EnvironmentObject private var blockingAction: BlockingActionController
 
     @AppStorage(TimelineGrouping.storageKey)
     private var timelineGrouping = TimelineGrouping.date.rawValue
@@ -63,7 +64,9 @@ struct SettingsView: View {
                         ) {
                             Button("Clear History & Return to Latest", role: .destructive) {
                                 ActionFeedback.light()
-                                clearKeptMediaAndReturnToLatest()
+                                blockingAction.run(message: "Clearing Kept Media…") {
+                                    await clearKeptMediaAndReturnToLatest()
+                                }
                             }
                             Button("Cancel", role: .cancel) {}
                         } message: {
@@ -140,4 +143,5 @@ struct SettingsView: View {
         presentUserGuide: {},
         clearKeptMediaAndReturnToLatest: {}
     )
+    .environmentObject(BlockingActionController())
 }

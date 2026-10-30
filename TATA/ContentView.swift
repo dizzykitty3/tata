@@ -24,6 +24,8 @@ struct ContentView: View {
     @AppStorage(MediaAction.storageKey) private var actionOrder = MediaAction.defaultOrder
     @AppStorage(MediaAction.hiddenStorageKey) private var hiddenActions = ""
 
+    @StateObject private var blockingAction = BlockingActionController()
+
     @StateObject private var playbackControl = MediaPlaybackControl()
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -109,8 +111,16 @@ struct ContentView: View {
             }
             .tabViewStyle(.sidebarAdaptable)
             .defaultAdaptableTabBarPlacement(.sidebar)
+            .disabled(blockingAction.message != nil)
+            .accessibilityHidden(blockingAction.message != nil)
 
 
+        }
+        .environmentObject(blockingAction)
+        .overlay {
+            if let message = blockingAction.message {
+                BlockingActionOverlay(message: message)
+            }
         }
         .animation(.easeInOut(duration: 0.2), value: showsRefreshSuggestion)
         .task(id: showsRefreshSuggestion) {
