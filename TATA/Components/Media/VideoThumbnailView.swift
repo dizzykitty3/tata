@@ -46,12 +46,20 @@ struct VideoThumbnailView: View {
             playbackControl?.isPlaying = playback.isPlaying
             playbackControl?.action = { playback.toggle(asset: asset) }
         }
+        .onChange(of: playback.player) { _, player in
+            playbackControl?.videoAssetIdentifier = asset.localIdentifier
+            playbackControl?.videoPlayer = player
+        }
         .onChange(of: playback.isPlaying) { _, playing in
             playbackControl?.isPlaying = playing
         }
         .onDisappear {
             isVisible = false
             playback.stop()
+            if playbackControl?.videoAssetIdentifier == asset.localIdentifier {
+                playbackControl?.videoPlayer = nil
+                playbackControl?.videoAssetIdentifier = nil
+            }
         }
         .task(id: shouldPlay) {
             guard shouldPlay else { playback.stop(); return }

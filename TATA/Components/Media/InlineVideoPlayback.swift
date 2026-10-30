@@ -11,6 +11,7 @@ final class InlineVideoPlayback: ObservableObject {
     private var hasStarted = false
     private var startedMuted = false
     private var endObserver: NSObjectProtocol?
+    private var playbackObservation: NSKeyValueObservation?
 
     func start(asset: PHAsset) {
         guard !hasStarted, requestID == nil else { return }
@@ -38,6 +39,13 @@ final class InlineVideoPlayback: ObservableObject {
                         guard let self, self.generation == token else { return }
                         self.isPlaying = false
                         self.finishMutedPlayback()
+                    }
+                }
+                self.playbackObservation = player.observe(\.timeControlStatus, options: [.new]) { [weak self] player, _ in
+                    let playing = player.timeControlStatus != .paused
+                    Task { @MainActor [weak self] in
+                        guard let self, self.generation == token else { return }
+                        self.isPlaying = playing
                     }
                 }
                 self.player = player
@@ -73,6 +81,7 @@ final class InlineVideoPlayback: ObservableObject {
         generation = UUID()
         if let requestID { PHImageManager.default().cancelImageRequest(requestID) }
         requestID = nil
+        playbackObservation = nil
         player?.pause()
         player = nil
         if let endObserver { NotificationCenter.default.removeObserver(endObserver) }

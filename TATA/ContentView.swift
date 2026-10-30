@@ -71,7 +71,15 @@ struct ContentView: View {
                     .overlay(alignment: .bottom) {
                         VStack(spacing: 20) {
                             refreshSuggestion
-                            swipeActions
+                            if let asset = swipeModel.current,
+                               asset.mediaType == .video,
+                               playbackControl.videoAssetIdentifier == asset.localIdentifier,
+                               let player = playbackControl.videoPlayer {
+                                VideoControlsRow(player: player) { swipeActions }
+                                    .id(ObjectIdentifier(player))
+                            } else {
+                                swipeActions
+                            }
                         }
                         .padding(.bottom, 16)
                     }

@@ -1,9 +1,12 @@
+import AVKit
 import Combine
 import SwiftUI
 
 @MainActor
 final class MediaPlaybackControl: ObservableObject {
     @Published var isPlaying = false
+    @Published var videoPlayer: AVPlayer?
+    var videoAssetIdentifier: String?
     var action: (() -> Void)?
 }
 
