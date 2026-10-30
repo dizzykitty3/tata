@@ -42,6 +42,8 @@ struct MediaMuteButton: View {
                 .frame(width: ActionButtonLayout.height, height: ActionButtonLayout.height)
                 .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .foregroundStyle(.primary)
         .accessibilityLabel(muteController.shouldMuteNewPlayback ? "Unmute" : "Mute")
     }
 }
