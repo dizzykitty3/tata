@@ -31,7 +31,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
+                Section("Media") {
                     Toggle("Autoplay Live Photos", isOn: $autoplayLivePhotos)
 
                     Toggle("Autoplay Videos", isOn: $autoplayVideos)
@@ -75,11 +75,13 @@ struct SettingsView: View {
                             Text("This will clear your kept media history and return Swipe to the newest available media. This cannot be undone. No photos or videos will be deleted.")
                         }
                     }
+                } header: {
+                    Text("Browsing History")
                 } footer: {
                     Text("Remember media you swipe left to keep, so you can focus on unreviewed items next time.")
                 }
 
-                Section {
+                Section("Interface") {
                     Toggle("Tap to Hide UI", isOn: $tapToHideMediaUI)
 
                     NavigationLink("Action Buttons") {
@@ -92,7 +94,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section {
+                Section("Stats & About") {
                     LabeledContent("Deleted Media") {
                         CrossfadeText(text: deletionManager.deletedMediaCount.formatted())
                             .foregroundStyle(.secondary)
