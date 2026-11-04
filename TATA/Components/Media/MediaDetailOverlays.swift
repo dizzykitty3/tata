@@ -209,6 +209,7 @@ struct MediaPhotoPreviewSheet: View {
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .contentShape(Rectangle())
+            .hiddenMediaZoom(enabled: tapToHideMediaUI && isUIHidden, assetID: asset.localIdentifier)
             .onTapGesture { if tapToHideMediaUI { isUIHidden.toggle() } }
 
             VStack {

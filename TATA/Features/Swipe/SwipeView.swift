@@ -116,6 +116,7 @@ struct SwipeView: View {
                 .clipped()
                 .contentShape(Rectangle())
                 .gesture(dragGesture(in: proxy.size))
+                .hiddenMediaZoom(enabled: tapToHideMediaUI && isUIHidden, assetID: model.current?.localIdentifier)
                 .onTapGesture {
                     guard tapToHideMediaUI, !isTransitioning else { return }
                     isUIHidden.toggle()
@@ -134,57 +135,59 @@ struct SwipeView: View {
         .favoriteDeletionConfirmation(confirmation)
     }
 
-    private func dragGesture(in size: CGSize) -> some Gesture {
-        DragGesture()
-            .onChanged { value in
-                guard !isTransitioning else { return }
-                if dragAxis == nil {
-                    let x = abs(value.translation.width)
-                    let y = abs(value.translation.height)
-                    guard max(x, y) > 8 else { return }
-                    dragAxis = x >= y ? .horizontal : .vertical
+    private func dragGesture(in size: CGSize) -> SingleFingerDrag {
+        SingleFingerDrag(enabled: !(tapToHideMediaUI && isUIHidden)) { translation in
+            guard !isTransitioning else { return }
+            if dragAxis == nil {
+                let x = abs(translation.width)
+                let y = abs(translation.height)
+                guard max(x, y) > 8 else { return }
+                dragAxis = x >= y ? .horizontal : .vertical
+            }
+            switch dragAxis {
+            case .horizontal:
+                let x = translation.width
+                guard (x > 0 && model.previous != nil) || (x < 0 && model.current != nil) else {
+                    offset = .zero
+                    return
                 }
-                switch dragAxis {
-                case .horizontal:
-                    let x = value.translation.width
-                    guard (x > 0 && model.previous != nil) || (x < 0 && model.current != nil) else {
+                offset = CGSize(width: min(max(x, -size.width), size.width), height: 0)
+            case .vertical:
+                // Downward drags have no assigned action or media transform.
+                offset = model.current == nil ? .zero : CGSize(
+                    width: 0,
+                    height: max(min(translation.height, 0), -size.height)
+                )
+            case nil:
+                break
+            }
+        } ended: { translation in
+            guard !isTransitioning else { return }
+            if dragAxis == .vertical, translation.height < -swipeThreshold, model.current != nil {
+                guard let asset = model.current else { return }
+                confirmation.request(assets: [asset], onRequiresConfirmation: {
+                    withAnimation(.easeOut(duration: transitionDuration)) {
                         offset = .zero
-                        return
+                        dragAxis = nil
                     }
-                    offset = CGSize(width: min(max(x, -size.width), size.width), height: 0)
-                case .vertical:
-                    // Downward drags have no assigned action or media transform.
-                    offset = model.current == nil ? .zero : CGSize(
-                        width: 0,
-                        height: max(min(value.translation.height, 0), -size.height)
-                    )
-                case nil:
-                    break
+                }) {
+                    guard model.current?.localIdentifier == asset.localIdentifier else { return }
+                    dragAxis = .vertical
+                    if offset == .zero { offset = CGSize(width: 0, height: -1) }
+                    complete(to: CGSize(width: 0, height: -size.height), action: model.markCurrentForDeletion)
                 }
+            } else if dragAxis == .horizontal, translation.width < -swipeThreshold, model.current != nil {
+                complete(to: CGSize(width: -size.width, height: 0), action: model.moveNext)
+            } else if dragAxis == .horizontal, translation.width > swipeThreshold, model.previous != nil {
+                complete(to: CGSize(width: size.width, height: 0), action: model.movePrevious)
+            } else {
+                complete(to: .zero, action: {})
             }
-            .onEnded { value in
-                guard !isTransitioning else { return }
-                if dragAxis == .vertical, value.translation.height < -swipeThreshold, model.current != nil {
-                    guard let asset = model.current else { return }
-                    confirmation.request(assets: [asset], onRequiresConfirmation: {
-                        withAnimation(.easeOut(duration: transitionDuration)) {
-                            offset = .zero
-                            dragAxis = nil
-                        }
-                    }) {
-                        guard model.current?.localIdentifier == asset.localIdentifier else { return }
-                        dragAxis = .vertical
-                        if offset == .zero { offset = CGSize(width: 0, height: -1) }
-                        complete(to: CGSize(width: 0, height: -size.height), action: model.markCurrentForDeletion)
-                    }
-                } else if dragAxis == .horizontal, value.translation.width < -swipeThreshold, model.current != nil {
-                    complete(to: CGSize(width: -size.width, height: 0), action: model.moveNext)
-                } else if dragAxis == .horizontal, value.translation.width > swipeThreshold, model.previous != nil {
-                    complete(to: CGSize(width: size.width, height: 0), action: model.movePrevious)
-                } else {
-                    complete(to: .zero, action: {})
-                }
-            }
+        } cancelled: {
+            guard !isTransitioning else { return }
+            offset = .zero
+            dragAxis = nil
+        }
     }
 
     private func complete(to destination: CGSize, action: @escaping () -> Void) {
