@@ -30,7 +30,6 @@ struct MediaPlaybackButton: View {
 
 struct MediaMuteButton: View {
     @ObservedObject private var muteController = MediaPlaybackMuteController.shared
-    @AppStorage(MediaPlaybackMuteController.defaultMuteKey) private var defaultMute = false
 
     var body: some View {
         Button {

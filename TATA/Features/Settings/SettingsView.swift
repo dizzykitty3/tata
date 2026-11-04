@@ -9,8 +9,7 @@ struct SettingsView: View {
     @AppStorage(TimelineGrouping.storageKey)
     private var timelineGrouping = TimelineGrouping.date.rawValue
 
-    @AppStorage(MediaPlaybackMuteController.defaultMuteKey)
-    private var muteMediaByDefault = false
+    @ObservedObject private var muteController = MediaPlaybackMuteController.shared
 
     @AppStorage("autoplayLivePhotos")
     private var autoplayLivePhotos = true
@@ -36,10 +35,8 @@ struct SettingsView: View {
 
                     Toggle("Autoplay Videos", isOn: $autoplayVideos)
 
-                    Toggle(
-                        "Mute By Default",
-                        isOn: $muteMediaByDefault
-                    )
+                    Toggle("Mute Built-in Audio by Default", isOn: $muteController.muteBuiltInByDefault)
+                    Toggle("Mute External Audio by Default", isOn: $muteController.muteExternalByDefault)
 
                     Toggle("Confirm Before Deleting Favorites", isOn: $confirmBeforeDeletingFavorites)
 

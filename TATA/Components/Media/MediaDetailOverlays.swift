@@ -282,8 +282,6 @@ struct MediaInfoOverlay: View {
     let asset: PHAsset
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @AppStorage(MediaPlaybackMuteController.defaultMuteKey)
-    private var muteMediaByDefault = false
     @ObservedObject private var muteController = MediaPlaybackMuteController.shared
 
     private var showsMutedPill: Bool {
