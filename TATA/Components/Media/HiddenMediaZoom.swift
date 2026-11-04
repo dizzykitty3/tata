@@ -65,6 +65,11 @@ private struct HiddenMediaZoom: ViewModifier {
 }
 
 extension View {
+    /// Extend only the media surface; keep controls in the normal safe area.
+    func mediaSafeArea(normalEdges: Edge.Set = []) -> some View {
+        ignoresSafeArea(.container, edges: UIDevice.current.userInterfaceIdiom == .phone ? .all : normalEdges)
+    }
+
     func hiddenMediaZoom(enabled: Bool, assetID: String?) -> some View {
         modifier(HiddenMediaZoom(enabled: enabled, assetID: assetID))
     }

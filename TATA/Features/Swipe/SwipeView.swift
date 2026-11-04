@@ -122,7 +122,7 @@ struct SwipeView: View {
                     isUIHidden.toggle()
                 }
             }
-            .ignoresSafeArea(.container, edges: .vertical)
+            .mediaSafeArea(normalEdges: .vertical)
             .overlay(alignment: .topLeading) {
                 if let asset = model.current {
                     MediaInfoOverlay(asset: asset)
