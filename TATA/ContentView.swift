@@ -69,8 +69,12 @@ struct ContentView: View {
             TabView(selection: $selectedTab) {
                 Tab("Swipe", systemImage: "hand.draw", value: .swipe) {
                     mediaTabContent {
-                        SwipeView(model: swipeModel, playbackControl: playbackControl, isUIHidden: $isSwipeUIHidden)
-                            .id(refreshGeneration)
+                        // Each tab visit starts a fresh inline playback session.
+                        // The shared model keeps the browsing position.
+                        if selectedTab == .swipe {
+                            SwipeView(model: swipeModel, playbackControl: playbackControl, isUIHidden: $isSwipeUIHidden)
+                                .id(refreshGeneration)
+                        }
                     }
                     .overlay(alignment: .bottom) {
                         VStack(spacing: 20) {
