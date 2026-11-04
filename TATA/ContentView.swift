@@ -22,6 +22,7 @@ struct ContentView: View {
     private var categoriesModel: CategoriesViewModel
 
     @AppStorage(MediaAction.storageKey) private var actionOrder = MediaAction.defaultOrder
+    @AppStorage(MediaAction.showUnavailableKey) private var showUnavailable = false
     @AppStorage(MediaAction.hiddenStorageKey) private var hiddenActions = ""
 
     @StateObject private var blockingAction = BlockingActionController()
@@ -196,19 +197,23 @@ struct ContentView: View {
 
     private var availableSwipeActions: [MediaAction] {
         MediaAction.visibleActions(order: actionOrder, hidden: hiddenActions).filter { action in
-            switch action {
-            case .playback, .mute:
-                guard let asset = swipeModel.current else { return false }
-                return asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive)
-            case .favorite, .share:
-                return swipeModel.current != nil
-            case .undo:
-                return deletionManager.hasPendingAssets(from: .swipe)
-            case .pendingDeletions:
-                return !deletionManager.pendingAssets.isEmpty
-            case .delete:
-                return false
-            }
+            showUnavailable || swipeActionIsAvailable(action)
+        }
+    }
+
+    private func swipeActionIsAvailable(_ action: MediaAction) -> Bool {
+        switch action {
+        case .playback, .mute:
+            guard let asset = swipeModel.current else { return false }
+            return asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive)
+        case .favorite, .share:
+            return swipeModel.current != nil
+        case .undo:
+            return deletionManager.hasPendingAssets(from: .swipe)
+        case .pendingDeletions:
+            return !deletionManager.pendingAssets.isEmpty
+        case .delete:
+            return false
         }
     }
 
@@ -217,7 +222,11 @@ struct ContentView: View {
         if !availableSwipeActions.isEmpty || showsRefreshSuggestion {
             HStack(spacing: 0) {
                 ForEach(availableSwipeActions) { action in
-                    swipeAction(action)
+                    if swipeActionIsAvailable(action) {
+                        swipeAction(action)
+                    } else {
+                        UnavailableMediaActionButton(action: action)
+                    }
                 }
                 refreshSuggestion
             }

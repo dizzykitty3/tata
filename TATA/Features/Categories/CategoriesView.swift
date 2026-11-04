@@ -11,6 +11,8 @@ private struct MediaTypeCategory: Identifiable {
 }
 
 struct CategoriesView: View {
+    @AppStorage(MediaAction.showUnavailableKey) private var showUnavailable = false
+
     @ObservedObject var model: CategoriesViewModel
 
     @ObservedObject var deletionManager: DeletionManager
@@ -69,7 +71,7 @@ struct CategoriesView: View {
                     .listStyle(.insetGrouped)
                 }
 
-                if !deletionManager.pendingAssets.isEmpty {
+                if showUnavailable || !deletionManager.pendingAssets.isEmpty {
                     Button {
                         ActionFeedback.light()
                         isShowingPendingDeletions = true
@@ -83,6 +85,7 @@ struct CategoriesView: View {
                     .buttonStyle(.plain)
                     .glassEffect(.regular.interactive(), in: .capsule)
                     .buttonBorderShape(.capsule)
+                    .disabled(deletionManager.pendingAssets.isEmpty)
                     .accessibilityLabel("View Pending Deletions")
                     .accessibilityValue("\(deletionManager.pendingAssets.count) items")
                     .padding(.bottom, 16)

@@ -130,6 +130,7 @@ struct MediaPendingDeletionButton: View {
 
 struct MediaDetailActionBar: View {
     @AppStorage(MediaAction.storageKey) private var actionOrder = MediaAction.defaultOrder
+    @AppStorage(MediaAction.showUnavailableKey) private var showUnavailable = false
     @AppStorage(MediaAction.hiddenStorageKey) private var hiddenActions = ""
 
     let asset: PHAsset
@@ -139,12 +140,16 @@ struct MediaDetailActionBar: View {
 
     private var availableActions: [MediaAction] {
         MediaAction.visibleActions(order: actionOrder, hidden: hiddenActions).filter { action in
-            switch action {
-            case .mute: return asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive)
-            case .favorite, .share: return true
-            case .delete: return deletionManager != nil && deletionSource != nil
-            default: return false
-            }
+            showUnavailable || detailActionIsAvailable(action)
+        }
+    }
+
+    private func detailActionIsAvailable(_ action: MediaAction) -> Bool {
+        switch action {
+        case .mute: return asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive)
+        case .favorite, .share: return true
+        case .delete: return deletionManager != nil && deletionSource != nil
+        default: return false
         }
     }
 
@@ -152,29 +157,38 @@ struct MediaDetailActionBar: View {
         if !availableActions.isEmpty {
             HStack(spacing: 0) {
                 ForEach(availableActions) { action in
-                    switch action {
-                    case .mute:
-                        MediaMuteButton()
-                    case .favorite:
-                        MediaFavoriteButton(asset: asset)
-                    case .share:
-                        MediaShareButton(asset: asset)
-                    case .delete:
-                        if let deletionManager, let deletionSource {
-                            MediaPendingDeletionButton(
-                                asset: asset,
-                                deletionManager: deletionManager,
-                                source: deletionSource,
-                                dismiss: dismiss
-                            )
-                        }
-                    default:
-                        EmptyView()
+                    if !detailActionIsAvailable(action) {
+                        UnavailableMediaActionButton(action: action)
+                    } else {
+                        detailAction(action)
                     }
                 }
             }
             .padding(.horizontal, 6)
             .glassEffect(.regular.interactive(), in: .capsule)
+        }
+    }
+
+    @ViewBuilder
+    private func detailAction(_ action: MediaAction) -> some View {
+        switch action {
+        case .mute:
+            MediaMuteButton()
+        case .favorite:
+            MediaFavoriteButton(asset: asset)
+        case .share:
+            MediaShareButton(asset: asset)
+        case .delete:
+            if let deletionManager, let deletionSource {
+                MediaPendingDeletionButton(
+                    asset: asset,
+                    deletionManager: deletionManager,
+                    source: deletionSource,
+                    dismiss: dismiss
+                )
+            }
+        default:
+            EmptyView()
         }
     }
 }

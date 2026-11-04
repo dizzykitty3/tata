@@ -3,6 +3,7 @@ import SwiftUI
 enum MediaAction: String, CaseIterable, Identifiable {
     case playback, mute, favorite, share, undo, delete, pendingDeletions
 
+    static let showUnavailableKey = "showUnavailableMediaActions"
     static let hiddenStorageKey = "hiddenMediaActions"
 
     var isRequired: Bool { self == .playback || self == .pendingDeletions }
@@ -64,6 +65,8 @@ struct MediaActionOrderView: View {
 
     @AppStorage(MediaAction.hiddenStorageKey) private var hiddenActions = ""
 
+    @AppStorage(MediaAction.showUnavailableKey) private var showUnavailable = false
+
     @State private var isConfirmingRestoreDefaults = false
 
     var body: some View {
@@ -98,6 +101,12 @@ struct MediaActionOrderView: View {
             }
 
             Section {
+                Toggle("Show Unavailable Buttons", isOn: $showUnavailable)
+            } footer: {
+                Text("Keep selected buttons visible and dim them when their actions are unavailable.")
+            }
+
+            Section {
                 Button("Restore Defaults") {
                     ActionFeedback.light()
                     isConfirmingRestoreDefaults = true
@@ -113,15 +122,39 @@ struct MediaActionOrderView: View {
                         blockingAction.run(message: "Restoring Defaults…") {
                             storedOrder = MediaAction.defaultOrder
                             hiddenActions = ""
+                            showUnavailable = false
                         }
                     }
                     Button("Cancel", role: .cancel) {}
                 } message: {
-                    Text("This will enable all action buttons and restore their default order.")
+                    Text("This will enable all action buttons and restore their default order. Unavailable buttons will be hidden.")
                 }
             }
         }
         .navigationTitle("Action Buttons")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct UnavailableMediaActionButton: View {
+    let action: MediaAction
+
+    var body: some View {
+        Button {} label: {
+            if action == .pendingDeletions {
+                PendingDeletionCountLabel(count: 0)
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 14)
+                    .frame(height: ActionButtonLayout.height)
+            } else {
+                Image(systemName: action == .playback ? "play.fill" : action.symbol)
+                    .font(.title3)
+                    .frame(width: ActionButtonLayout.height, height: ActionButtonLayout.height)
+            }
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
+        .disabled(true)
+        .accessibilityLabel(action.title)
     }
 }
