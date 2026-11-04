@@ -295,6 +295,16 @@ struct MediaInfoOverlay: View {
         ZStack(alignment: .topLeading) {
             // The album group supplies spacing only when it contains pills.
             VStack(alignment: .leading, spacing: 0) {
+                if let date = asset.creationDate {
+                    Text(date.formatted(.dateTime.locale(Locale(identifier: "en_US")).month(.abbreviated).day().year()))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color(uiColor: .systemGray).opacity(0.55), in: Capsule())
+                        .padding(.bottom, 6)
+                }
+
                 MediaMetadataPill(asset: asset)
 
                 if showsMutedPill {
