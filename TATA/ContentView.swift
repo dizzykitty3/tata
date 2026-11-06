@@ -174,7 +174,8 @@ struct ContentView: View {
             UserGuideSheet {
                 hasCompletedUserGuide = true
             }
-            .presentationDetents([.medium])
+            .presentationDetents([.large])
+            .presentationDragIndicator(.hidden)
         }
     }
 

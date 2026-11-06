@@ -3,43 +3,62 @@ import Photos
 
 struct OnboardingView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage(UserGuideSheet.hasCompletedStorageKey) private var hasCompletedUserGuide = false
 
     @Binding var photoAuthorizationStatus: PHAuthorizationStatus
     @State private var isRequestingAuthorization = false
 
     var body: some View {
-        VStack(spacing: 32) {
-            Spacer()
-
-            Image(systemName: "photo.on.rectangle.angled")
-                .font(.system(size: 80))
-                .foregroundStyle(.tint)
-
-            VStack(spacing: 12) {
-                Text("Welcome")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-
-                Text(descriptionText)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            Button {
-                ActionFeedback.light()
-                handlePhotoPermission()
-            } label: {
-                Text(buttonTitle)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .frame(height: ActionButtonLayout.height)
-            .disabled(isRequestingAuthorization || photoAuthorizationStatus == .restricted)
+        ScrollView {
+            UserGuideContent(title: "Welcome to TATA")
         }
-        .padding(24)
+        .scrollEdgeEffectStyle(.hard, for: .bottom)
+        .safeAreaBar(edge: .bottom, spacing: 0) {
+            VStack(spacing: 12) {
+                Text(descriptionText)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button {
+                    ActionFeedback.light()
+                    handlePhotoPermission()
+                } label: {
+                    HStack(spacing: 10) {
+                        if isRequestingAuthorization { ProgressView().tint(.white) }
+                        Text(buttonTitle)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 32)
+                }
+                .buttonStyle(.glassProminent)
+                .controlSize(.large)
+                .font(.headline)
+                .buttonBorderShape(.capsule)
+                .frame(maxWidth: 340)
+                .disabled(isRequestingAuthorization || photoAuthorizationStatus == .restricted)
+
+                Button {
+                    ActionFeedback.light()
+                    hasCompletedUserGuide = true
+                    dismiss()
+                } label: {
+                    Text("Not Now")
+                        .frame(maxWidth: .infinity, minHeight: 32)
+                }
+                .buttonStyle(.glass)
+                .buttonBorderShape(.capsule)
+                .controlSize(.large)
+                .font(.headline)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: 340)
+                .disabled(isRequestingAuthorization)
+            }
+            .frame(maxWidth: 440)
+            .padding(.horizontal, 28)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity)
+        }
+        .interactiveDismissDisabled(isRequestingAuthorization)
         .onAppear {
             updateAuthorizationStatus()
         }
@@ -59,20 +78,20 @@ struct OnboardingView: View {
             return "Unavailable"
 
         default:
-            return "Continue"
+            return "Allow Photo Access"
         }
     }
 
     private var descriptionText: String {
         switch photoAuthorizationStatus {
         case .denied:
-            return "Photo access is required.\nEnable it in Settings to continue."
+            return "Photo access is required. Enable it in Settings to continue."
 
         case .restricted:
-            return "Photo access is restricted.\nPlease check your device settings."
+            return "Photo access is restricted. Please check your device settings."
 
         default:
-            return "Allow access to your photo library\nso we can organize your memories."
+            return "Allow access to your photo library so we can organize your memories."
         }
     }
 
@@ -82,6 +101,7 @@ struct OnboardingView: View {
         switch photoAuthorizationStatus {
 
         case .notDetermined:
+            hasCompletedUserGuide = true
             isRequestingAuthorization = true
             PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
                 DispatchQueue.main.async {
@@ -91,6 +111,7 @@ struct OnboardingView: View {
             }
 
         case .denied:
+            hasCompletedUserGuide = true
             openSettings()
 
         case .authorized, .limited:
@@ -131,73 +152,88 @@ struct UserGuideSheet: View {
     private var dismiss
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    Text("User Guide")
-                        .font(.largeTitle.weight(.bold))
-
-                    VStack(alignment: .leading, spacing: 24) {
-                        GuideStep(
-                            systemImage: "arrow.up",
-                            text: "Swipe up to delete."
-                        )
-
-                        GuideStep(
-                            systemImage: "arrow.left.arrow.right",
-                            text: "Swipe left or right to browse."
-                        )
-
-                        GuideStep(
-                            systemImage: "arrow.uturn.backward",
-                            text: "Undo to cancel your last action."
-                        )
-                    }
-                }
-                .padding(24)
+        ScrollView {
+            UserGuideContent(title: "User Guide")
+        }
+        .scrollEdgeEffectStyle(.hard, for: .bottom)
+        .safeAreaBar(edge: .bottom, spacing: 0) {
+            Button {
+                ActionFeedback.light()
+                onComplete()
+                dismiss()
+            } label: {
+                Text("Done")
+                    .frame(maxWidth: .infinity, minHeight: 32)
             }
-            .safeAreaInset(edge: .bottom) {
-                Button {
-                    ActionFeedback.light()
-                    onComplete()
-                    dismiss()
-                } label: {
-                    Text("OK")
-                        .padding(.horizontal, 28)
-                        .frame(height: ActionButtonLayout.height)
-                }
-                .font(.body.weight(.semibold))
-                .buttonStyle(.plain)
-                .foregroundStyle(.white)
-                .glassEffect(.regular.tint(.accentColor).interactive(), in: .capsule)
-                .buttonBorderShape(.capsule)
-                .padding(.vertical, 12)
-            }
-            .navigationBarTitleDisplayMode(.inline)
+            .buttonStyle(.glassProminent)
+            .controlSize(.large)
+            .font(.headline)
+            .buttonBorderShape(.capsule)
+            .frame(maxWidth: 340)
+            .padding(.horizontal, 28)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity)
         }
     }
 }
 
-private struct GuideStep: View {
-    let systemImage: String
-    let text: String
+private struct UserGuideContent: View {
+    let title: String
 
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-            Image(systemName: systemImage)
-                .font(.title3.weight(.semibold))
+        VStack(alignment: .leading, spacing: 24) {
+            Image(systemName: "photo.on.rectangle.angled")
+                .font(.system(size: 56))
                 .foregroundStyle(.tint)
-                .frame(width: 28, height: 28)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 16)
 
-            Text(text)
-                .font(.body)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 12) {
+                Text(title)
+                    .font(.title.bold())
+                Text("A simpler way to review your photos and videos.")
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 24) {
+                OnboardingStep(symbol: "arrow.left.arrow.right", title: "Browse",
+                               detail: "Swipe left or right to review your media.")
+                OnboardingStep(symbol: "arrow.up", title: "Set Aside",
+                               detail: "Swipe up to add media to Pending Deletions. Review it before confirming deletion.")
+                OnboardingStep(symbol: "arrow.uturn.backward", title: "Undo",
+                               detail: "Undo the last item you added to Pending Deletions in Swipe.")
+                OnboardingStep(symbol: "hand.tap", title: "Take a Closer Look",
+                               detail: "Tap to hide the controls, then pinch to zoom and drag to move. Tap again to show the controls.")
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: 440)
+        .padding(28)
+        .frame(maxWidth: .infinity)
     }
 }
 
 #Preview {
     OnboardingView(photoAuthorizationStatus: .constant(.notDetermined))
+}
+
+
+private struct OnboardingStep: View {
+    let symbol: String
+    let title: String
+    let detail: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 18) {
+            Image(systemName: symbol)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.tint)
+                .frame(width: 36, height: 32)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.headline)
+                Text(detail).foregroundStyle(.secondary)
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
 }
