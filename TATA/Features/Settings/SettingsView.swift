@@ -24,6 +24,7 @@ struct SettingsView: View {
     private var rememberKeptMedia = false
 
     @AppStorage("tapToHideMediaUI") private var tapToHideMediaUI = true
+    @AppStorage(MediaInfoOverlay.preferenceKey) private var showQuickInfo = true
 
     @State private var isConfirmingClearKeptMedia = false
 
@@ -79,6 +80,8 @@ struct SettingsView: View {
 
                 Section("Interface") {
                     Toggle("Tap to Hide UI", isOn: $tapToHideMediaUI)
+
+                    Toggle("Show Quick Info", isOn: $showQuickInfo)
 
                     NavigationLink("Action Buttons") {
                         MediaActionOrderView()

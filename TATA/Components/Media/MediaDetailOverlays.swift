@@ -279,6 +279,19 @@ struct ActivityShareSheet: UIViewControllerRepresentable {
 }
 
 struct MediaInfoOverlay: View {
+    static let preferenceKey = "showQuickInfo"
+
+    @AppStorage(Self.preferenceKey) private var showQuickInfo = true
+    let asset: PHAsset
+
+    var body: some View {
+        if showQuickInfo {
+            MediaInfoContent(asset: asset)
+        }
+    }
+}
+
+private struct MediaInfoContent: View {
     let asset: PHAsset
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
