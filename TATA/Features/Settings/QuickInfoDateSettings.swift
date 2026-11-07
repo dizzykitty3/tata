@@ -5,12 +5,12 @@ private enum DateOrder: String, CaseIterable {
     case monthFirst = "Month, Day, Year"
     case dayFirst = "Day, Month, Year"
 
-    func fields(includeYear: Bool) -> [String] {
+    func fields(includeYear: Bool, month: String) -> [String] {
         let fields: [String]
         switch self {
-        case .yearFirst: fields = ["yyyy", "MM", "dd"]
-        case .monthFirst: fields = ["MM", "dd", "yyyy"]
-        case .dayFirst: fields = ["dd", "MM", "yyyy"]
+        case .yearFirst: fields = ["yyyy", month, "dd"]
+        case .monthFirst: fields = [month, "dd", "yyyy"]
+        case .dayFirst: fields = ["dd", month, "yyyy"]
         }
         return fields.filter { includeYear || $0 != "yyyy" }
     }
@@ -40,11 +40,25 @@ struct QuickInfoDatePreferences: DynamicProperty {
 
     @AppStorage("quickInfoDateOrder") fileprivate var order = DateOrder.yearFirst
     @AppStorage("quickInfoDateSeparator") var separator = "-"
+    @AppStorage("quickInfoAbbreviateMonth") var abbreviateMonth = false
     @AppStorage("quickInfoShowCurrentYear") var showCurrentYear = true
 
     func display(_ date: Date) -> String {
         let formatter = DateFormatter()
+        if abbreviateMonth {
+            let calendar = formatter.calendar
+            formatter.locale = Locale(identifier: "en_US")
+            formatter.calendar = calendar
+        }
         let includeYear = showCurrentYear || !formatter.calendar.isDate(date, equalTo: .now, toGranularity: .year)
+        if abbreviateMonth {
+            switch order {
+            case .monthFirst: formatter.dateFormat = includeYear ? "MMM d, yyyy" : "MMM d"
+            case .dayFirst: formatter.dateFormat = includeYear ? "d MMM yyyy" : "d MMM"
+            case .yearFirst: formatter.dateFormat = includeYear ? "yyyy MMM d" : "MMM d"
+            }
+            return formatter.string(from: date)
+        }
         let defaults = UserDefaults.standard
         if includeYear, order.rawValue == defaults.string(forKey: "quickInfoInitialOrder"),
            separator == defaults.string(forKey: "quickInfoInitialSeparator"),
@@ -52,7 +66,7 @@ struct QuickInfoDatePreferences: DynamicProperty {
             formatter.dateFormat = pattern
             return formatter.string(from: date)
         }
-        formatter.dateFormat = order.fields(includeYear: includeYear).joined(separator: separator)
+        formatter.dateFormat = order.fields(includeYear: includeYear, month: "MM").joined(separator: separator)
         return formatter.string(from: date)
     }
 }
@@ -69,6 +83,8 @@ struct QuickInfoDateSettings: View {
                 Picker("Separator", selection: preferences.$separator) {
                     ForEach(["-", "/", "."], id: \.self) { Text($0).tag($0) }
                 }
+                .disabled(preferences.abbreviateMonth)
+                Toggle("Use Abbreviated Month Names", isOn: preferences.$abbreviateMonth)
                 Toggle("Show Current Year", isOn: preferences.$showCurrentYear)
             }
             LabeledContent("Preview", value: preferences.display(.now))
