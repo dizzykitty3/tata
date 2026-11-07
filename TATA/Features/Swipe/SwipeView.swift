@@ -11,8 +11,8 @@ struct SwipeView: View {
         case vertical
     }
 
-    private let swipeThreshold: CGFloat = 80
-    private let transitionDuration: Double = 0.28
+    private let swipeThreshold: CGFloat = 30
+    private let transitionDuration: Double = 0.2
 
     @ObservedObject
     var model: SwipeViewModel
