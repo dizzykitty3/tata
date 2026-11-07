@@ -83,6 +83,10 @@ struct SettingsView: View {
 
                     Toggle("Show Quick Info", isOn: $showQuickInfo)
 
+                    NavigationLink("Quick Info Date Format") {
+                        QuickInfoDateSettings()
+                    }
+
                     NavigationLink("Action Buttons") {
                         MediaActionOrderView()
                     }

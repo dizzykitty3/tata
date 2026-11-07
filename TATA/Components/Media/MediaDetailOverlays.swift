@@ -292,6 +292,7 @@ struct MediaInfoOverlay: View {
 }
 
 private struct MediaInfoContent: View {
+    private var datePreferences = QuickInfoDatePreferences()
     let asset: PHAsset
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -307,7 +308,7 @@ private struct MediaInfoContent: View {
             // The album group supplies spacing only when it contains pills.
             VStack(alignment: .leading, spacing: 0) {
                 if let date = asset.creationDate {
-                    Text(date.formatted(.dateTime.locale(Locale(identifier: "en_US")).month(.abbreviated).day().year()))
+                    Text(datePreferences.display(date))
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
