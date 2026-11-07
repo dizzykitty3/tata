@@ -35,8 +35,7 @@ struct SettingsView: View {
 
                     Toggle("Autoplay Videos", isOn: $autoplayVideos)
 
-                    Toggle("Mute Built-in Audio by Default", isOn: $muteController.muteBuiltInByDefault)
-                    Toggle("Mute External Audio by Default", isOn: $muteController.muteExternalByDefault)
+                    Toggle("Mute by Default", isOn: $muteController.muteByDefault)
 
                     Toggle("Confirm Before Deleting Favorites", isOn: $confirmBeforeDeletingFavorites)
 
