@@ -46,24 +46,20 @@ struct QuickInfoDatePreferences: DynamicProperty {
     func display(_ date: Date) -> String {
         let formatter = DateFormatter()
         if abbreviateMonth {
-            let calendar = formatter.calendar
-            formatter.locale = Locale(identifier: "en_US")
-            formatter.calendar = calendar
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.calendar = Calendar(identifier: .gregorian)
         }
         let includeYear = showCurrentYear || !formatter.calendar.isDate(date, equalTo: .now, toGranularity: .year)
         if abbreviateMonth {
-            switch order {
-            case .monthFirst: formatter.dateFormat = includeYear ? "MMM d, yyyy" : "MMM d"
-            case .dayFirst: formatter.dateFormat = includeYear ? "d MMM yyyy" : "d MMM"
-            case .yearFirst: formatter.dateFormat = includeYear ? "yyyy MMM d" : "MMM d"
-            }
+            formatter.dateFormat = includeYear ? "MMM d, yyyy" : "MMM d"
             return formatter.string(from: date)
         }
         let defaults = UserDefaults.standard
-        if includeYear, order.rawValue == defaults.string(forKey: "quickInfoInitialOrder"),
+        if order.rawValue == defaults.string(forKey: "quickInfoInitialOrder"),
            separator == defaults.string(forKey: "quickInfoInitialSeparator"),
            let pattern = defaults.string(forKey: "quickInfoInitialPattern") {
-            formatter.dateFormat = pattern
+            formatter.dateFormat = includeYear ? pattern : pattern.replacingOccurrences(
+                of: #"^[^MdL]*[yY]+[^MdL]*|[^MdL]*[yY]+[^MdL]*$"#, with: "", options: .regularExpression)
             return formatter.string(from: date)
         }
         formatter.dateFormat = order.fields(includeYear: includeYear, month: "MM").joined(separator: separator)
@@ -77,19 +73,40 @@ struct QuickInfoDateSettings: View {
     var body: some View {
         Form {
             Section {
-                Picker("Date Order", selection: preferences.$order) {
-                    ForEach(DateOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }
-                Picker("Separator", selection: preferences.$separator) {
-                    ForEach(["-", "/", "."], id: \.self) { Text($0).tag($0) }
-                }
-                .disabled(preferences.abbreviateMonth)
                 Toggle("Use Abbreviated Month Names", isOn: preferences.$abbreviateMonth)
+                if !preferences.abbreviateMonth {
+                    Picker("Date Order", selection: preferences.$order) {
+                        ForEach(DateOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }
+                    Picker("Separator", selection: preferences.$separator) {
+                        ForEach(["-", "/", "."], id: \.self) { Text($0).tag($0) }
+                    }
+                }
                 Toggle("Show Current Year", isOn: preferences.$showCurrentYear)
+                LabeledContent("Preview") {
+                    ViewThatFits(in: .horizontal) {
+                        HStack { previewBadges }
+                        VStack(alignment: .trailing) { previewBadges }
+                    }
+                }
             }
-            LabeledContent("Preview", value: preferences.display(.now))
         }
         .navigationTitle("Quick Info Date Format")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var previewBadges: some View {
+        let calendar = Calendar(identifier: .gregorian)
+        let year = calendar.component(.year, from: .now)
+        return ForEach([year, year + 1], id: \.self) { year in
+            if let date = calendar.date(from: DateComponents(year: year, month: 11, day: 4)) {
+                Text(preferences.display(date))
+                    .font(.caption)
+                    .fixedSize()
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.quaternary, in: Capsule())
+            }
+        }
     }
 }
