@@ -81,7 +81,7 @@ struct SwipeView: View {
                                 autoplaysLivePhoto: autoplayLivePhotos,
                                 autoplaysVideo: autoplayVideos,
                                 playbackControl: playbackControl,
-                                targetSize: PhotoService.browsingImageSize
+                                targetSize: current.mediaType == .image ? PHImageManagerMaximumSize : PhotoService.browsingImageSize
                             )
                             .id(current.localIdentifier)
                         } else {

@@ -94,6 +94,12 @@ final class PhotoService {
             contentMode: .aspectFit,
             options: options
         ) { image, _ in
+            if size == PHImageManagerMaximumSize, let image {
+                // Keep full-resolution images local to the displayed view so they
+                // cannot evict the previews used for swipe transitions.
+                image.prepareForDisplay { prepared in completion(prepared ?? image) }
+                return
+            }
             if let image {
                 self.imageCache.setObject(image, forKey: cacheKey, cost: (image.cgImage?.bytesPerRow ?? 0) * (image.cgImage?.height ?? 0))
             }
