@@ -67,32 +67,54 @@ struct QuickInfoDatePreferences: DynamicProperty {
     }
 }
 
-struct QuickInfoDateSettings: View {
-    private var preferences = QuickInfoDatePreferences()
+struct QuickInfoSettings: View {
+    @AppStorage(MediaInfoOverlay.preferenceKey) private var showQuickInfo = true
+    private var visibility = QuickInfoVisibility()
 
     var body: some View {
         Form {
             Section {
-                Toggle("Use Abbreviated Month Names", isOn: preferences.$abbreviateMonth)
-                if !preferences.abbreviateMonth {
-                    Picker("Date Order", selection: preferences.$order) {
-                        ForEach(DateOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
-                    Picker("Separator", selection: preferences.$separator) {
-                        ForEach(["-", "/", "."], id: \.self) { Text($0).tag($0) }
-                    }
+                Toggle("Show Quick Info", isOn: $showQuickInfo)
+            }
+            if showQuickInfo {
+                Section("Visible Information") {
+                    Toggle("Date", isOn: visibility.$date)
+                    Toggle("File Size and Format", isOn: visibility.$fileDetails)
+                    Toggle("Muted Status", isOn: visibility.$mutedStatus)
+                    Toggle("Albums", isOn: visibility.$albums)
                 }
-                Toggle("Show Current Year", isOn: preferences.$showCurrentYear)
-                LabeledContent("Preview") {
-                    ViewThatFits(in: .horizontal) {
-                        HStack { previewBadges }
-                        VStack(alignment: .trailing) { previewBadges }
-                    }
+                if visibility.date {
+                    QuickInfoDateFormatSection()
                 }
             }
         }
-        .navigationTitle("Quick Info Date Format")
+        .navigationTitle("Quick Info")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct QuickInfoDateFormatSection: View {
+    private var preferences = QuickInfoDatePreferences()
+
+    var body: some View {
+        Section("Date Format") {
+            Toggle("Use Abbreviated Month Names", isOn: preferences.$abbreviateMonth)
+            if !preferences.abbreviateMonth {
+                Picker("Date Order", selection: preferences.$order) {
+                    ForEach(DateOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }
+                Picker("Separator", selection: preferences.$separator) {
+                    ForEach(["-", "/", "."], id: \.self) { Text($0).tag($0) }
+                }
+            }
+            Toggle("Show Current Year", isOn: preferences.$showCurrentYear)
+            LabeledContent("Preview") {
+                ViewThatFits(in: .horizontal) {
+                    HStack { previewBadges }
+                    VStack(alignment: .trailing) { previewBadges }
+                }
+            }
+        }
     }
 
     private var previewBadges: some View {

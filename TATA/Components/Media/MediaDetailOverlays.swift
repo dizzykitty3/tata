@@ -278,6 +278,13 @@ struct ActivityShareSheet: UIViewControllerRepresentable {
     ) {}
 }
 
+struct QuickInfoVisibility: DynamicProperty {
+    @AppStorage("quickInfoShowsDate") var date = true
+    @AppStorage("quickInfoShowsFileDetails") var fileDetails = true
+    @AppStorage("quickInfoShowsMutedStatus") var mutedStatus = true
+    @AppStorage("quickInfoShowsAlbums") var albums = true
+}
+
 struct MediaInfoOverlay: View {
     static let preferenceKey = "showQuickInfo"
 
@@ -292,6 +299,7 @@ struct MediaInfoOverlay: View {
 }
 
 private struct MediaInfoContent: View {
+    private var visibility = QuickInfoVisibility()
     private var datePreferences = QuickInfoDatePreferences()
     let asset: PHAsset
 
@@ -299,7 +307,7 @@ private struct MediaInfoContent: View {
     @ObservedObject private var muteController = MediaPlaybackMuteController.shared
 
     private var showsMutedPill: Bool {
-        (asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive))
+        visibility.mutedStatus && (asset.mediaType == .video || asset.mediaSubtypes.contains(.photoLive))
             && muteController.shouldMuteNewPlayback
     }
 
@@ -307,7 +315,7 @@ private struct MediaInfoContent: View {
         ZStack(alignment: .topLeading) {
             // The album group supplies spacing only when it contains pills.
             VStack(alignment: .leading, spacing: 0) {
-                if let date = asset.creationDate {
+                if visibility.date, let date = asset.creationDate {
                     Text(datePreferences.display(date))
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.white)
@@ -317,7 +325,9 @@ private struct MediaInfoContent: View {
                         .padding(.bottom, 6)
                 }
 
-                MediaMetadataPill(asset: asset)
+                if visibility.fileDetails {
+                    MediaMetadataPill(asset: asset)
+                }
 
                 if showsMutedPill {
                     Text("Muted")
@@ -333,7 +343,9 @@ private struct MediaInfoContent: View {
                         .transition(.opacity)
                 }
 
-                IncludedAlbumsPills(asset: asset)
+                if visibility.albums {
+                    IncludedAlbumsPills(asset: asset)
+                }
             }
             .id(asset.localIdentifier)
             .transition(.opacity)
