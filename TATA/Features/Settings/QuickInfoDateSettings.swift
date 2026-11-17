@@ -77,6 +77,9 @@ struct QuickInfoSettings: View {
                 Toggle("Show Quick Info", isOn: $showQuickInfo)
             }
             if showQuickInfo {
+                Section("Preview") {
+                    QuickInfoPreview()
+                }
                 Section("Visible Information") {
                     Toggle("Date", isOn: visibility.$date)
                     Toggle("File Size and Format", isOn: visibility.$fileDetails)
@@ -108,27 +111,41 @@ private struct QuickInfoDateFormatSection: View {
                 }
             }
             Toggle("Show Current Year", isOn: preferences.$showCurrentYear)
-            LabeledContent("Preview") {
-                ViewThatFits(in: .horizontal) {
-                    HStack { previewBadges }
-                    VStack(alignment: .trailing) { previewBadges }
-                }
-            }
         }
     }
+}
 
-    private var previewBadges: some View {
-        let calendar = Calendar(identifier: .gregorian)
-        let year = calendar.component(.year, from: .now)
-        return ForEach([year, year + 1], id: \.self) { year in
-            if let date = calendar.date(from: DateComponents(year: year, month: 11, day: 4)) {
-                Text(preferences.display(date))
-                    .font(.caption)
-                    .fixedSize()
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.quaternary, in: Capsule())
+private struct QuickInfoPreview: View {
+    private var preferences = QuickInfoDatePreferences()
+    private var visibility = QuickInfoVisibility()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var labels: [String] {
+        var result: [String] = []
+        if visibility.date { result.append(preferences.display(.now)) }
+        if visibility.fileDetails { result.append("12.4 MB HEIC") }
+        if visibility.mutedStatus { result.append("Muted") }
+        if visibility.albums { result.append("Favorites") }
+        return result
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if labels.isEmpty {
+                Text("Enable an item below to preview Quick Info.")
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(labels, id: \.self) { label in
+                Text(label)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color(uiColor: .systemGray).opacity(0.55), in: Capsule())
+                    .transition(.opacity)
             }
         }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: labels)
+        .padding(.vertical, 6)
     }
 }
