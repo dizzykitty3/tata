@@ -3,9 +3,11 @@ import Foundation
 import Photos
 
 enum TimelineGrouping: String, CaseIterable, Identifiable {
+    case hour
     case date
     case week
     case month
+    case year
 
     static let storageKey = "timelineGrouping"
 
@@ -102,6 +104,10 @@ final class TimelineViewModel: ObservableObject {
         grouping: TimelineGrouping
     ) -> Date {
         switch grouping {
+        case .hour:
+            calendar.dateInterval(of: .hour, for: date)?.start ?? date
+        case .year:
+            calendar.dateInterval(of: .year, for: date)?.start ?? date
         case .date:
             calendar.startOfDay(for: date)
         case .week:
@@ -118,6 +124,10 @@ final class TimelineViewModel: ObservableObject {
         grouping: TimelineGrouping
     ) -> Date {
         switch grouping {
+        case .hour:
+            calendar.startOfDay(for: date)
+        case .year:
+            calendar.dateInterval(of: .era, for: date)?.start ?? date
         case .date, .week:
             calendar.dateInterval(of: .month, for: date)?.start ?? date
         case .month:

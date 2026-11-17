@@ -86,6 +86,10 @@ struct TimelineView: View {
 
     private func sectionTitle(for section: TimelineMediaSection) -> String {
         switch grouping {
+        case .hour:
+            section.date.formatted(date: .abbreviated, time: .omitted)
+        case .year:
+            "Years"
         case .date, .week:
             section.date.formatted(.dateTime.year().month(.wide))
         case .month:
@@ -95,6 +99,10 @@ struct TimelineView: View {
 
     private func periodTitle(for period: TimelineMediaPeriod) -> String {
         switch grouping {
+        case .hour:
+            period.date.formatted(date: .abbreviated, time: .shortened)
+        case .year:
+            period.date.formatted(.dateTime.year())
         case .date:
             period.date.formatted(.dateTime.year().month(.wide).day())
         case .week:
@@ -136,6 +144,10 @@ private struct TimelineRow: View {
 
     private var dayTitle: String {
         switch grouping {
+        case .hour:
+            return period.date.formatted(date: .omitted, time: .shortened)
+        case .year:
+            return period.date.formatted(.dateTime.year())
         case .date:
             if calendar.isDateInToday(period.date) {
                 return "Today"
@@ -155,6 +167,8 @@ private struct TimelineRow: View {
 
     private var subtitle: String? {
         switch grouping {
+        case .hour, .year:
+            return nil
         case .date:
             return period.date.formatted(.dateTime.weekday(.wide).day())
         case .week:
