@@ -9,6 +9,8 @@ final class InlineVideoPlayback: ObservableObject {
     private var requestID: PHImageRequestID?
     private var generation = UUID()
     private var hasStarted = false
+    private var isSuspended = false
+    private var resumesAfterSuspension = false
     private var startedMuted = false
     private var endObserver: NSObjectProtocol?
     private var playbackObservation: NSKeyValueObservation?
@@ -49,8 +51,13 @@ final class InlineVideoPlayback: ObservableObject {
                     }
                 }
                 self.player = player
-                player.play()
-                self.isPlaying = true
+                if self.isSuspended {
+                    self.resumesAfterSuspension = true
+                    self.finishMutedPlayback()
+                } else {
+                    player.play()
+                    self.isPlaying = true
+                }
             }
         }
     }
@@ -76,7 +83,27 @@ final class InlineVideoPlayback: ObservableObject {
         }
     }
 
+    func setSuspended(_ suspended: Bool) {
+        guard isSuspended != suspended else { return }
+        isSuspended = suspended
+        if suspended {
+            resumesAfterSuspension = isPlaying || requestID != nil
+            player?.pause()
+            isPlaying = false
+            finishMutedPlayback()
+        } else if resumesAfterSuspension {
+            resumesAfterSuspension = false
+            guard let player else { return }
+            startedMuted = MediaPlaybackMuteController.shared.beginMutedPlaybackIfNeeded()
+            player.isMuted = startedMuted
+            player.play()
+            isPlaying = true
+        }
+    }
+
     func stop() {
+        hasStarted = false
+        resumesAfterSuspension = false
         isPlaying = false
         generation = UUID()
         if let requestID { PHImageManager.default().cancelImageRequest(requestID) }

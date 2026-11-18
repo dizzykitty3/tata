@@ -43,6 +43,7 @@ struct VideoThumbnailView: View {
         .contentShape(Rectangle())
         .onAppear {
             isVisible = true
+            playback.setSuspended(scenePhase != .active || isShowingPlayer)
             playbackControl?.isPlaying = playback.isPlaying
             playbackControl?.action = { playback.toggle(asset: asset) }
         }
@@ -62,12 +63,18 @@ struct VideoThumbnailView: View {
             }
         }
         .task(id: shouldPlay) {
-            guard shouldPlay else { playback.stop(); return }
+            guard shouldPlay else { return }
             do {
                 try await Task.sleep(for: .milliseconds(250))
                 try Task.checkCancellation()
                 playback.start(asset: asset)
             } catch {}
+        }
+        .onChange(of: scenePhase) { _, phase in
+            playback.setSuspended(phase != .active || isShowingPlayer)
+        }
+        .onChange(of: isShowingPlayer) { _, showing in
+            playback.setSuspended(scenePhase != .active || showing)
         }
         .onChange(of: muteController.shouldMuteNewPlayback) { _, muted in
             playback.player?.isMuted = muted
