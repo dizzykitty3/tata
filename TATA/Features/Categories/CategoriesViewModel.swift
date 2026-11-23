@@ -29,6 +29,26 @@ final class CategoriesViewModel: ObservableObject {
     @Published private(set) var assets: [PHAsset] = []
     @Published private(set) var isLoading = true
 
+    private var sourceAlbums: [MediaAlbum] = []
+    private var sourceAssets: [PHAsset] = []
+    private var keptSubscription: AnyCancellable?
+
+    init() {
+        keptSubscription = KeptMediaFilter.changes.dropFirst().sink { [weak self] _ in
+            self?.applyKeptFilter()
+        }
+    }
+
+    private func applyKeptFilter() {
+        let excluded = KeptMediaFilter.excludedIdentifiers
+        assets = sourceAssets.filter { !excluded.contains($0.localIdentifier) }
+        albums = sourceAlbums.compactMap { album in
+            let visible = album.assets.filter { !excluded.contains($0.localIdentifier) }
+            guard !visible.isEmpty else { return nil }
+            return MediaAlbum(collection: album.collection, assets: visible)
+        }
+    }
+
     private var loadedRevision: Int?
     private var loadingRevision: Int?
     private var generation = UUID()
@@ -50,8 +70,9 @@ final class CategoriesViewModel: ObservableObject {
             let assets = PhotoService.shared.fetchAssetSnapshot()
             Task { @MainActor [weak self] in
                 guard let self, self.generation == token else { return }
-                self.albums = albums
-                self.assets = assets
+                self.sourceAlbums = albums
+                self.sourceAssets = assets
+                self.applyKeptFilter()
                 self.loadedRevision = revision
                 self.loadingRevision = nil
                 self.isLoading = false
@@ -63,8 +84,9 @@ final class CategoriesViewModel: ObservableObject {
         generation = UUID()
         loadingRevision = nil
         loadedRevision = PhotoLibraryRevision.shared.value
-        self.albums = albums
-        self.assets = assets
+        sourceAlbums = albums
+        sourceAssets = assets
+        applyKeptFilter()
         isLoading = false
     }
 }

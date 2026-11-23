@@ -50,6 +50,8 @@ struct TimelineMediaSection: Identifiable {
 final class TimelineViewModel: ObservableObject {
     @Published private(set) var sections: [TimelineMediaSection] = []
 
+    private var sourceAssets: [PHAsset] = []
+    private var keptSubscription: AnyCancellable?
     private var loadedRevision: Int?
     private var loadedGrouping: TimelineGrouping?
     private let calendar = Calendar.autoupdatingCurrent
@@ -61,6 +63,10 @@ final class TimelineViewModel: ObservableObject {
 
     init() {
         reload(grouping: .date)
+        keptSubscription = KeptMediaFilter.changes.dropFirst().sink { [weak self] _ in
+            guard let self else { return }
+            self.reload(assets: self.sourceAssets, grouping: self.loadedGrouping ?? .date)
+        }
     }
 
     func reload(grouping: TimelineGrouping) {
@@ -71,9 +77,11 @@ final class TimelineViewModel: ObservableObject {
     }
 
     func reload(assets: [PHAsset], grouping: TimelineGrouping) {
+        sourceAssets = assets
         loadedRevision = PhotoLibraryRevision.shared.value
         loadedGrouping = grouping
-        let datedAssets = assets.compactMap { asset -> (Date, PHAsset)? in
+        let excluded = KeptMediaFilter.excludedIdentifiers
+        let datedAssets = assets.filter { !excluded.contains($0.localIdentifier) }.compactMap { asset -> (Date, PHAsset)? in
 
             guard let creationDate = asset.creationDate else {
                 return nil

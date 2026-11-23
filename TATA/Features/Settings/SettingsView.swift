@@ -23,6 +23,9 @@ struct SettingsView: View {
     @AppStorage(SwipeViewModel.rememberKeptMediaKey)
     private var rememberKeptMedia = false
 
+    @AppStorage(KeptMediaFilter.enabledKey)
+    private var excludeKeptMedia = true
+
     @AppStorage("tapToHideMediaUI") private var tapToHideMediaUI = true
 
     @State private var isConfirmingClearKeptMedia = false
@@ -79,6 +82,10 @@ struct SettingsView: View {
         Form {
             Section {
                 Toggle("Remember Kept Media", isOn: $rememberKeptMedia)
+
+                if rememberKeptMedia {
+                    Toggle("Hide Kept Media in Timeline and Categories", isOn: $excludeKeptMedia)
+                }
 
                 if !rememberKeptMedia {
                     Button("Clear Kept Media & Return to Latest") {
