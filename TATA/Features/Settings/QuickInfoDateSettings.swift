@@ -41,7 +41,7 @@ struct QuickInfoDatePreferences: DynamicProperty {
     @AppStorage("quickInfoDateOrder") fileprivate var order = DateOrder.yearFirst
     @AppStorage("quickInfoDateSeparator") var separator = "-"
     @AppStorage("quickInfoAbbreviateMonth") var abbreviateMonth = false
-    @AppStorage("quickInfoShowCurrentYear") var showCurrentYear = true
+    @AppStorage("quickInfoShowCurrentYear") var showCurrentYear = false
 
     func display(_ date: Date) -> String {
         let formatter = DateFormatter()
